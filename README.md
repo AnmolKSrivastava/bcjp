@@ -3,7 +3,7 @@
 > India's first bilingual (Hindi/English) voice-powered job portal for blue-collar workers
 
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-yellow?logo=javascript)
 ![Vite](https://img.shields.io/badge/Vite-5-purple?logo=vite)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3-cyan?logo=tailwindcss)
 
@@ -38,7 +38,7 @@ npm run dev
 
 ## 🛠️ Tech Stack
 
-- **Framework:** React 18 with TypeScript
+- **Framework:** React 18 with JavaScript (JSX)
 - **Build Tool:** Vite 5
 - **Styling:** Tailwind CSS 3
 - **Components:** shadcn/ui (Radix UI) + Material UI
@@ -51,14 +51,14 @@ npm run dev
 ```
 src/
 ├── app/
-│   ├── App.tsx                 # Main app component
+│   ├── App.jsx                 # Main app component
 │   └── components/             # Removed (consolidated)
 ├── shared/                     # Shared components
 │   ├── common/
-│   │   └── LanguageModal.tsx   # Language selector modal
+│   │   └── LanguageModal.jsx   # Language selector modal
 │   ├── layout/
-│   │   ├── Navbar.tsx          # Navigation bar
-│   │   └── Footer.tsx          # Footer
+│   │   ├── Navbar.jsx          # Navigation bar
+│   │   └── Footer.jsx          # Footer
 │   └── index.ts                # Barrel exports
 ├── lib/
 │   └── ui/                     # shadcn/ui components (47 files)
@@ -66,19 +66,19 @@ src/
 │   ├── auth/                   # Authentication features
 │   ├── landing/                # Landing page sections
 │   │   └── components/
-│   │       ├── HeroSection.tsx
-│   │       ├── HowItWorks.tsx
-│   │       ├── JobCategories.tsx
-│   │       ├── FeaturedJobs.tsx
-│   │       ├── LanguageSection.tsx
-│   │       ├── EmployerSection.tsx
-│   │       ├── SuccessStories.tsx
-│   │       └── CTABanner.tsx
+│   │       ├── HeroSection.jsx
+│   │       ├── HowItWorks.jsx
+│   │       ├── JobCategories.jsx
+│   │       ├── FeaturedJobs.jsx
+│   │       ├── LanguageSection.jsx
+│   │       ├── EmployerSection.jsx
+│   │       ├── SuccessStories.jsx
+│   │       └── CTABanner.jsx
 │   └── profile/                # Profile features
 ├── assets/                     # Images and static files
 ├── styles/
 │   └── index.css               # Global styles
-└── main.tsx                    # Entry point
+└── main.jsx                    # Entry point
 ```
 
 ## 🎨 Sections

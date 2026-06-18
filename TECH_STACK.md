@@ -5,7 +5,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      KaamSetu Landing Page                    │
-│                   (React 18 + TypeScript)                     │
+│                          (React 18)                     │
 └─────────────────────────────────────────────────────────────┘
                               │
                               │
@@ -81,7 +81,6 @@
 KaamSetu
 ├── react (18.x) ─────────────────► Core framework
 ├── react-dom (18.x) ─────────────► DOM rendering
-├── typescript (5.x) ─────────────► Type safety
 │
 ├── vite (5.x) ───────────────────► Build tool
 │   └── @vitejs/plugin-react ────► React plugin
@@ -303,19 +302,19 @@ Future State (Full Stack)
 ## 📊 File Size Breakdown
 
 ```
-Component Files (JS/TSX)
-├── App.tsx                   2 KB
-├── Navbar.tsx                5 KB
-├── HeroSection.tsx           6 KB
-├── HowItWorks.tsx            4 KB
-├── JobCategories.tsx         5 KB
-├── FeaturedJobs.tsx          6 KB
-├── LanguageSection.tsx       6 KB
-├── EmployerSection.tsx       7 KB
-├── SuccessStories.tsx        7 KB
-├── CTABanner.tsx             5 KB
-├── Footer.tsx                4 KB
-├── LanguageModal.tsx         4 KB
+Component Files (JSX)
+├── App.jsx                   2 KB
+├── Navbar.jsx                5 KB
+├── HeroSection.jsx           6 KB
+├── HowItWorks.jsx            4 KB
+├── JobCategories.jsx         5 KB
+├── FeaturedJobs.jsx          6 KB
+├── LanguageSection.jsx       6 KB
+├── EmployerSection.jsx       7 KB
+├── SuccessStories.jsx        7 KB
+├── CTABanner.jsx             5 KB
+├── Footer.jsx                4 KB
+├── LanguageModal.jsx         4 KB
 └── UI Components (40+)      80 KB
                     Total:  ~140 KB
 
