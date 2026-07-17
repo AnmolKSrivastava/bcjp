@@ -32,7 +32,7 @@ function EmployerSection({ lang }) {
                   <div className="w-3 h-3 rounded-full bg-green-400" />
                 </div>
                 <div className="flex-1 min-w-0 bg-white rounded-lg text-xs text-[#94A3B8] px-3 py-1 sm:ml-2 truncate">
-                  kaamsetu.in/employer/dashboard
+                  bharatgig.in/employer/dashboard
                 </div>
               </div>
               {

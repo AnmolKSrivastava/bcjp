@@ -9,8 +9,8 @@ const stories = [
     days: 5,
     salary: "₹28,000/mo",
     quote: {
-      en: "I just spoke for 5 minutes and KaamSetu created my resume. Got hired in just 5 days!",
-      hi: "मैंने सिर्फ 5 मिनट बोला और KaamSetu ने मेरा रेज़्यूमे बना दिया। 5 दिन में नौकरी मिली!"
+      en: "I just spoke for 5 minutes and Bharat Gig created my resume. Got hired in just 5 days!",
+      hi: "मैंने सिर्फ 5 मिनट बोला और Bharat Gig ने मेरा रेज़्यूमे बना दिया। 5 दिन में नौकरी मिली!"
     },
     img: homeImages.electrician,
     color: "#FEF3C7"
@@ -22,8 +22,8 @@ const stories = [
     days: 8,
     salary: "₹20,000/mo",
     quote: {
-      en: "I didn't know how to write a resume. Now I have a job at a hotel, thanks to KaamSetu!",
-      hi: "मुझे रेज़्यूमे लिखना नहीं आता था। अब होटल में नौकरी मिली, KaamSetu का शुक्रिया!"
+      en: "I didn't know how to write a resume. Now I have a job at a hotel, thanks to Bharat Gig!",
+      hi: "मुझे रेज़्यूमे लिखना नहीं आता था। अब होटल में नौकरी मिली, Bharat Gig का शुक्रिया!"
     },
     img: homeImages.housekeeping,
     color: "#DBEAFE"
@@ -53,7 +53,7 @@ function SuccessStories({ lang }) {
             {lang === "hi" ? "सफलता की कहानियाँ" : "Success Stories"}
           </h2>
           <p className="text-lg text-[#64748B] max-w-xl mx-auto">
-            {lang === "hi" ? "हज़ारों मज़दूरों ने KaamSetu से अपनी नई नौकरी पाई" : "Thousands of workers found their next job through KaamSetu"}
+            {lang === "hi" ? "हज़ारों मज़दूरों ने Bharat Gig से अपनी नई नौकरी पाई" : "Thousands of workers found their next job through Bharat Gig"}
           </p>
         </div>
 

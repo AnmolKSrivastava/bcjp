@@ -1,11 +1,21 @@
 import { useState } from "react";
-import { Mic, Menu, User } from "lucide-react";
+import { Mic, Menu, User, LogOut } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle
 } from "@/lib/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/lib/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/lib/ui/avatar";
+import { useAuth } from "@/features/auth";
 const t = {
   en: {
     findJobs: "Find Jobs",
@@ -16,7 +26,11 @@ const t = {
     login: "Login",
     createProfile: "Create Profile",
     menu: "Menu",
-    switchLang: "Switch to Hindi"
+    switchLang: "Switch to Hindi",
+    myAccount: "My Account",
+    logout: "Logout",
+    roleWorker: "Job Seeker",
+    roleEmployer: "Employer"
   },
   hi: {
     findJobs: "नौकरी खोजें",
@@ -27,7 +41,11 @@ const t = {
     login: "लॉगिन",
     createProfile: "प्रोफाइल बनाएं",
     menu: "मेनू",
-    switchLang: "अंग्रेज़ी में बदलें"
+    switchLang: "अंग्रेज़ी में बदलें",
+    myAccount: "मेरा खाता",
+    logout: "लॉगआउट",
+    roleWorker: "नौकरी खोजने वाले",
+    roleEmployer: "नियोक्ता"
   }
 };
 const navLinks = [
@@ -37,9 +55,39 @@ const navLinks = [
   { key: "successStories", id: "stories" },
   { key: "aboutUs", id: "cta" }
 ];
-function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick }) {
+function AccountMenu({ txt, phone, roleLabel, onSignOut, triggerClassName }) {
+  return <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" aria-label={txt.myAccount} className={triggerClassName}>
+          <Avatar className="size-9">
+            <AvatarFallback className="bg-[#2563EB] text-white">
+              <User size={18} />
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>
+          <p className="text-sm font-bold text-[#0F172A]">{phone}</p>
+          {roleLabel && <p className="text-xs font-medium text-[#64748B]">{roleLabel}</p>}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+    onClick={onSignOut}
+    className="cursor-pointer text-red-600 focus:text-red-600"
+  >
+          <LogOut className="size-4" />
+          {txt.logout}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>;
+}
+function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCreateProfile = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const txt = t[lang];
+  const { user, profile, signOut } = useAuth();
+  const isLoggedIn = Boolean(user);
+  const roleLabel = profile?.role === "employer" ? txt.roleEmployer : profile?.role === "worker" ? txt.roleWorker : null;
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     setMenuOpen(false);
@@ -75,7 +123,7 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick }) {
                   <Mic size={18} className="text-white" />
                 </div>
                 <span className="text-xl font-bold text-[#0F172A] truncate">
-                  Setu<span className="text-[#2563EB]">App</span>
+                  Bharat<span className="text-[#2563EB]">Gig</span>
                 </span>
               </div>
             </div>
@@ -103,40 +151,52 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick }) {
   >
                 🌐 {lang === "hi" ? "हिन्दी | EN" : "हिन्दी | EN"}
               </button>
-              <button
+              {isLoggedIn ? <AccountMenu
+    txt={txt}
+    phone={user.phoneNumber}
+    roleLabel={roleLabel}
+    onSignOut={signOut}
+    triggerClassName="flex items-center justify-center rounded-full transition-transform hover:scale-105"
+  /> : <button
     onClick={onLoginClick}
     className="text-sm font-semibold text-[#0F172A] hover:text-[#2563EB] transition-colors px-3 py-2"
   >
                 {txt.login}
-              </button>
-              <button
+              </button>}
+              {showCreateProfile && <button
     onClick={onCreateProfileClick}
     className="flex items-center gap-2 bg-[#F97316] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-500 transition-all hover:shadow-lg hover:shadow-orange-200"
   >
                 🎤 {txt.createProfile}
-              </button>
+              </button>}
             </div>
 
             {
     /* Mobile actions — always visible */
   }
             <div className="flex lg:hidden items-center gap-1.5 shrink-0">
-              <button
+              {isLoggedIn ? <AccountMenu
+    txt={txt}
+    phone={user.phoneNumber}
+    roleLabel={roleLabel}
+    onSignOut={signOut}
+    triggerClassName="flex items-center justify-center w-10 h-10 rounded-full"
+  /> : <button
     type="button"
     aria-label={txt.login}
     onClick={onLoginClick}
     className="flex items-center justify-center w-10 h-10 rounded-xl text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] transition-colors"
   >
                 <User size={20} />
-              </button>
-              <button
+              </button>}
+              {showCreateProfile && <button
     type="button"
     aria-label={txt.createProfile}
     onClick={onCreateProfileClick}
     className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#F97316] text-white hover:bg-orange-500 transition-colors shadow-sm"
   >
                 <Mic size={20} />
-              </button>
+              </button>}
             </div>
           </div>
         </div>
@@ -158,7 +218,7 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick }) {
                 <Mic size={18} className="text-white" />
               </div>
               <SheetTitle className="text-lg font-bold text-[#0F172A]">
-                Kaam<span className="text-[#2563EB]">Setu</span>
+                Bharat<span className="text-[#2563EB]">Gig</span>
               </SheetTitle>
             </div>
           </SheetHeader>

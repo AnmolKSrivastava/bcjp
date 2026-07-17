@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide - KaamSetu
+# 🚀 Quick Start Guide - Bharat Gig
 
 ## Step 1: Install Dependencies
 

@@ -27,4 +27,4 @@ These files are kept for reference purposes. The actual project has evolved beyo
 
 The main project configuration is in the root folder:
 - `vite.config.ts` - Cleaned up, removed Figma-specific resolvers
-- `package.json` - Renamed from "@figma/my-make-file" to "kaamsetu"
+- `package.json` - Renamed from "@figma/my-make-file" to "bharat-gig"

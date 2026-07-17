@@ -4,7 +4,12 @@ import {
   signInWithPhoneNumber
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase";
-function getAuthErrorMessage(code, lang) {
+function getAuthErrorMessage(code, lang, rawMessage = "") {
+  if (code === "auth/operation-not-allowed" && /region enabled/i.test(rawMessage)) {
+    return lang === "hi"
+      ? "India (+91) के लिए SMS Firebase Console में सक्षम नहीं है। Authentication → Settings → SMS region policy में India जोड़ें।"
+      : "SMS for India (+91) is not enabled. In Firebase Console go to Authentication → Settings → SMS region policy and allow India.";
+  }
   const messages = {
     "auth/invalid-phone-number": {
       en: "Please enter a valid 10-digit mobile number.",
@@ -25,6 +30,18 @@ function getAuthErrorMessage(code, lang) {
     "auth/captcha-check-failed": {
       en: "Verification failed. Please refresh and try again.",
       hi: "सत्यापन विफल। कृपया रिफ्रेश करें और पुनः प्रयास करें।"
+    },
+    "auth/invalid-app-credential": {
+      en: "Phone verification failed. Check Firebase Phone Auth and authorized domains, then try again.",
+      hi: "फ़ोन सत्यापन विफल। Firebase Phone Auth और authorized domains जाँचें, फिर पुनः प्रयास करें।"
+    },
+    "auth/operation-not-allowed": {
+      en: "Phone sign-in is not enabled. Enable it in Firebase Console → Authentication → Sign-in method.",
+      hi: "फ़ोन साइन-इन सक्षम नहीं है। Firebase Console → Authentication → Sign-in method में इसे चालू करें।"
+    },
+    "auth/quota-exceeded": {
+      en: "SMS quota exceeded. Try again later or use a Firebase test phone number.",
+      hi: "SMS सीमा पूरी हो गई। बाद में पुनः प्रयास करें या Firebase test phone number का उपयोग करें।"
     }
   };
   return messages[code]?.[lang] ?? (lang === "hi" ? "कुछ गलत हो गया। पुनः प्रयास करें।" : "Something went wrong. Please try again.");
@@ -71,7 +88,10 @@ function usePhoneAuth(lang) {
       } catch (err) {
         clearRecaptcha();
         const code = err?.code ?? "";
-        const message = getAuthErrorMessage(code, lang);
+        if (import.meta.env.DEV) {
+          console.error("Firebase sendOtp error:", code, err?.message);
+        }
+        const message = getAuthErrorMessage(code, lang, err?.message);
         setError(message);
         throw new Error(message);
       } finally {
@@ -113,7 +133,10 @@ function usePhoneAuth(lang) {
     clearRecaptcha
   };
 }
+// Stable container id — must stay mounted and must NOT use display:none.
+const RECAPTCHA_CONTAINER_ID = "phone-auth-recaptcha";
 export {
   formatIndianPhone,
+  RECAPTCHA_CONTAINER_ID,
   usePhoneAuth
 };

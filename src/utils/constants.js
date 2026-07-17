@@ -1,9 +1,9 @@
-const APP_NAME = "KaamSetu";
+const APP_NAME = "Bharat Gig";
 const APP_TAGLINE = "India's Voice-First Job Portal";
 const STORAGE_KEYS = {
-  LANGUAGE: "kaamsetu-lang",
-  USER_TOKEN: "kaamsetu-token",
-  USER_PROFILE: "kaamsetu-profile"
+  LANGUAGE: "bharatgig-lang",
+  USER_TOKEN: "bharatgig-token",
+  USER_PROFILE: "bharatgig-profile"
 };
 const LANGUAGES = {
   HINDI: "hi",
@@ -39,8 +39,22 @@ const API_ENDPOINTS = {
   RESUME: "/api/resume",
   APPLICATIONS: "/api/applications"
 };
+// Firestore collection names — see documentation/08-architecture/02-Database-Architecture-and-Data-Model.md
+const COLLECTIONS = {
+  USERS: "users",
+  ORGANIZATIONS: "organizations",
+  JOB_OPENINGS: "jobOpenings",
+  APPLICATIONS: "applications",
+  CANDIDATES: "candidates"
+};
+const USER_ROLES = {
+  WORKER: "worker",
+  EMPLOYER: "employer"
+};
 export {
   API_ENDPOINTS,
+  COLLECTIONS,
+  USER_ROLES,
   APP_NAME,
   APP_TAGLINE,
   BREAKPOINTS,

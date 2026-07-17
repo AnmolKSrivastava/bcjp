@@ -1,10 +1,10 @@
-# KaamSetu - Tech Stack Overview
+# Bharat Gig - Tech Stack Overview
 
 ## 🏗️ Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      KaamSetu Landing Page                    │
+│                      Bharat Gig Landing Page                    │
 │                          (React 18)                     │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -78,7 +78,7 @@
 ## 📦 Dependency Tree
 
 ```
-KaamSetu
+Bharat Gig
 ├── react (18.x) ─────────────────► Core framework
 ├── react-dom (18.x) ─────────────► DOM rendering
 │
@@ -147,7 +147,7 @@ KaamSetu
                     │  LocalStorage   │
                     │                 │
                     │  Key:           │
-                    │  kaamsetu-lang  │
+                    │  bharat-gig-lang  │
                     │  Value: hi|en   │
                     └─────────────────┘
                               │
@@ -256,7 +256,7 @@ App
 ```
 Current State (Frontend Only)
 ┌─────────────────────────────┐
-│     KaamSetu Frontend       │
+│     Bharat Gig Frontend       │
 │     (React + Vite)          │
 │                             │
 │  - Static content           │
@@ -268,7 +268,7 @@ Current State (Frontend Only)
 
 Future State (Full Stack)
 ┌─────────────────────────────┐
-│     KaamSetu Frontend       │
+│     Bharat Gig Frontend       │
 │     (React + Vite)          │
 └──────────┬──────────────────┘
            │ REST/GraphQL API

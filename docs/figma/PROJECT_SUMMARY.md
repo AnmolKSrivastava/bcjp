@@ -1,11 +1,11 @@
-# 📋 PROJECT SUMMARY - KaamSetu
+# 📋 PROJECT SUMMARY - Bharat Gig
 
 ## What You Have
 
-You have a **complete, production-ready React landing page** for a blue-collar job portal called **KaamSetu**. This was generated from your Figma design and converted into high-quality, maintainable React code.
+You have a **complete, production-ready React landing page** for a blue-collar job portal called **Bharat Gig**. This was generated from your Figma design and converted into high-quality, maintainable React code.
 
 ## Project Name
-**KaamSetu** (काम सेतु) - "Bridge to Work"
+**Bharat Gig** — India's gig workforce platform
 
 ## Target Audience
 Blue-collar workers in India (electricians, plumbers, drivers, delivery executives, security guards, factory workers, etc.)

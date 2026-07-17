@@ -55,7 +55,7 @@ function Footer({ lang }) {
               <div className="w-10 h-10 bg-[#2563EB] rounded-xl flex items-center justify-center">
                 <Mic size={20} className="text-white" />
               </div>
-              <span className="text-2xl font-extrabold">Setu<span className="text-[#2563EB]">App</span></span>
+              <span className="text-2xl font-extrabold">Bharat<span className="text-[#2563EB]">Gig</span></span>
             </div>
             <p className="text-[#94A3B8] leading-relaxed mb-4 max-w-xs">
               {lang === "hi" ? "भारत का वॉयस-फर्स्ट जॉब पोर्टल। बोलें और नौकरी पाएं।" : "India's voice-first job portal. Speak and get hired."}
@@ -117,7 +117,7 @@ function Footer({ lang }) {
 
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[#64748B] text-sm">
-            © 2026 KaamSetu. {lang === "hi" ? "सभी अधिकार सुरक्षित।" : "All rights reserved."}
+            © 2026 Bharat Gig. {lang === "hi" ? "सभी अधिकार सुरक्षित।" : "All rights reserved."}
           </p>
           <div className="flex gap-6 text-sm text-[#64748B]">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>

@@ -1,4 +1,4 @@
-# 🚀 Deployment Guide - KaamSetu
+# 🚀 Deployment Guide - Bharat Gig
 
 This guide covers deploying your React + Vite application to various hosting platforms.
 
@@ -271,10 +271,10 @@ server {
 
 ```bash
 # Build image
-docker build -t kaamsetu .
+docker build -t bharat-gig .
 
 # Run container
-docker run -p 8080:80 kaamsetu
+docker run -p 8080:80 bharat-gig
 ```
 
 ---
@@ -320,7 +320,7 @@ Or use Azure Portal:
 
 ```env
 VITE_API_URL=https://api.example.com
-VITE_APP_NAME=KaamSetu
+VITE_APP_NAME=Bharat Gig
 ```
 
 ### Access in code:
@@ -536,7 +536,7 @@ Sentry.init({
 
 ## Recommended: Vercel
 
-For KaamSetu, **Vercel** is recommended because:
+For Bharat Gig, **Vercel** is recommended because:
 
 1. ✅ Zero-config deployment
 2. ✅ Automatic CI/CD from GitHub

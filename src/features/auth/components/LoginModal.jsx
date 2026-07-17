@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { Phone, ArrowLeft, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -15,10 +15,10 @@ import {
   InputOTPSlot
 } from "@/lib/ui/input-otp";
 import { isFirebaseConfigured } from "@/lib/firebase";
-import { formatIndianPhone, usePhoneAuth } from "../hooks/usePhoneAuth";
+import { formatIndianPhone, RECAPTCHA_CONTAINER_ID, usePhoneAuth } from "../hooks/usePhoneAuth";
 const t = {
   en: {
-    title: "Login to KaamSetu",
+    title: "Login to Bharat Gig",
     subtitle: "Enter your mobile number to receive a one-time password.",
     phoneLabel: "Mobile number",
     phonePlaceholder: "10-digit mobile number",
@@ -33,7 +33,7 @@ const t = {
     invalidOtp: "Please enter the 6-digit OTP."
   },
   hi: {
-    title: "KaamSetu में लॉगिन करें",
+    title: "Bharat Gig में लॉगिन करें",
     subtitle: "OTP पाने के लिए अपना मोबाइल नंबर दर्ज करें।",
     phoneLabel: "मोबाइल नंबर",
     phonePlaceholder: "10 अंकों का मोबाइल नंबर",
@@ -50,7 +50,6 @@ const t = {
 };
 function LoginModal({ open, onOpenChange, lang, onSuccess }) {
   const txt = t[lang];
-  const recaptchaId = useId().replace(/:/g, "");
   const [step, setStep] = useState("phone");
   const [phoneDigits, setPhoneDigits] = useState("");
   const [otp, setOtp] = useState("");
@@ -78,7 +77,7 @@ function LoginModal({ open, onOpenChange, lang, onSuccess }) {
       return;
     }
     try {
-      await sendOtp(phone, recaptchaId);
+      await sendOtp(phone, RECAPTCHA_CONTAINER_ID);
       setStep("otp");
       setOtp("");
     } catch {
@@ -215,8 +214,6 @@ function LoginModal({ open, onOpenChange, lang, onSuccess }) {
               </div>
             </motion.div>}
         </AnimatePresence>
-
-        <div id={recaptchaId} className="hidden" aria-hidden="true" />
       </DialogContent>
     </Dialog>;
 }

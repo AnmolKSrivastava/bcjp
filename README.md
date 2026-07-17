@@ -1,4 +1,4 @@
-# KaamSetu - Voice-First Blue Collar Job Portal 🇮🇳
+# Bharat Gig - Voice-First Blue Collar Job Portal 🇮🇳
 
 > India's first bilingual (Hindi/English) voice-powered job portal for blue-collar workers
 

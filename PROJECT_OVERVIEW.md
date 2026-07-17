@@ -1,8 +1,8 @@
-# KaamSetu - Blue Collar Job Portal
+# Bharat Gig - Blue Collar Job Portal
 
 ## 🚀 Project Overview
 
-**KaamSetu** is a voice-first job portal designed specifically for India's blue-collar workforce. The platform enables workers to create resumes and find jobs using voice input in Hindi or English, removing literacy barriers.
+**Bharat Gig** is a voice-first job portal designed specifically for India's blue-collar workforce. The platform enables workers to create resumes and find jobs using voice input in Hindi or English, removing literacy barriers.
 
 ## ✨ Key Features
 
