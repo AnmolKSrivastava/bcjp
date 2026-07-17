@@ -3,15 +3,24 @@ import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
 import { createUserProfile, fetchUserProfile } from "../services/userService";
 import { fetchCandidateProfile } from "@/features/profile/services/candidateService";
+import { fetchOrganization } from "@/features/employer/services/organizationService";
 import { USER_ROLES } from "@/utils/constants";
 
 const AuthContext = createContext(null);
+
+async function loadEmployerOrganization(userProfile) {
+  if (userProfile?.role !== USER_ROLES.EMPLOYER || !userProfile.organizationId) {
+    return null;
+  }
+  return fetchOrganization(userProfile.organizationId);
+}
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [candidateProfile, setCandidateProfile] = useState(null);
+  const [organization, setOrganization] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
@@ -28,19 +37,26 @@ function AuthProvider({ children }) {
           setProfile(userProfile);
           if (userProfile?.role === USER_ROLES.WORKER) {
             setCandidateProfile(await fetchCandidateProfile(nextUser.uid));
+            setOrganization(null);
+          } else if (userProfile?.role === USER_ROLES.EMPLOYER) {
+            setCandidateProfile(null);
+            setOrganization(await loadEmployerOrganization(userProfile));
           } else {
             setCandidateProfile(null);
+            setOrganization(null);
           }
         } catch (err) {
           console.error("Failed to load user profile", err);
           setProfile(null);
           setCandidateProfile(null);
+          setOrganization(null);
         } finally {
           setProfileLoading(false);
         }
       } else {
         setProfile(null);
         setCandidateProfile(null);
+        setOrganization(null);
       }
       setLoading(false);
     });
@@ -53,6 +69,7 @@ function AuthProvider({ children }) {
       const created = await createUserProfile(user, { role, language });
       setProfile(created);
       setCandidateProfile(null);
+      setOrganization(null);
       return created;
     },
     [user]
@@ -72,6 +89,15 @@ function AuthProvider({ children }) {
     return latest;
   }, [user]);
 
+  const refreshOrganization = useCallback(async () => {
+    if (!user) return null;
+    const userProfile = await fetchUserProfile(user.uid);
+    setProfile(userProfile);
+    const org = await loadEmployerOrganization(userProfile);
+    setOrganization(org);
+    return org;
+  }, [user]);
+
   const signOut = async () => {
     if (!isFirebaseConfigured) return;
     await firebaseSignOut(getFirebaseAuth());
@@ -84,6 +110,12 @@ function AuthProvider({ children }) {
     !profileLoading &&
     profile?.role === USER_ROLES.WORKER &&
     !profile?.onboardingComplete;
+  const needsEmployerProfile =
+    Boolean(user) &&
+    !loading &&
+    !profileLoading &&
+    profile?.role === USER_ROLES.EMPLOYER &&
+    !profile?.onboardingComplete;
 
   return (
     <AuthContext.Provider
@@ -92,12 +124,15 @@ function AuthProvider({ children }) {
         loading,
         profile,
         candidateProfile,
+        organization,
         profileLoading,
         needsOnboarding,
         needsCandidateProfile,
+        needsEmployerProfile,
         completeOnboarding,
         refreshProfile,
         refreshCandidateProfile,
+        refreshOrganization,
         signOut
       }}
     >

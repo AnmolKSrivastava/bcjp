@@ -45,7 +45,8 @@ const COLLECTIONS = {
   ORGANIZATIONS: "organizations",
   JOB_OPENINGS: "jobOpenings",
   APPLICATIONS: "applications",
-  CANDIDATES: "candidates"
+  CANDIDATES: "candidates",
+  SAVED_JOBS: "savedJobs"
 };
 const USER_ROLES = {
   WORKER: "worker",

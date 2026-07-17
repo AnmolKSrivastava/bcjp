@@ -1,6 +1,18 @@
-import { useEffect, useRef, useState } from "react";
-import { MapPin, Briefcase, ArrowRight, Search, Mic, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { MapPin, Briefcase, ArrowRight, Search, Mic, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
 import { motion } from "motion/react";
+import { isFirebaseConfigured } from "@/lib/firebase";
+import { useAuth } from "@/features/auth";
+import { listOpenJobs } from "@/features/employer/services/jobService";
+import {
+  applyToJob,
+  listCandidateApplications,
+  listSavedJobIds,
+  saveJob,
+  unsaveJob
+} from "@/features/profile/services/applicationService";
+import { USER_ROLES } from "@/utils/constants";
+
 const copy = {
   en: {
     badge: "Featured Openings",
@@ -12,8 +24,19 @@ const copy = {
     listening: "Listening…",
     voiceHint: 'Try saying "electrician jobs in Pune"',
     noResults: "No jobs match your search.",
+    noJobs: "No open jobs yet. Check back soon.",
+    loading: "Loading jobs…",
+    loadError: "Could not load jobs. Please refresh.",
     apply: "Apply Now",
-    save: "Save"
+    applied: "Applied",
+    applying: "Applying…",
+    save: "Save",
+    saved: "Saved",
+    loginToApply: "Please log in to apply.",
+    workerOnly: "Only job seekers can apply.",
+    profileRequired: "Please create your profile first.",
+    applyError: "Could not apply. Please try again.",
+    saveError: "Could not save job. Please try again."
   },
   hi: {
     badge: "फ़ीचर्ड नौकरियाँ",
@@ -25,73 +48,151 @@ const copy = {
     listening: "सुन रहे हैं…",
     voiceHint: '"पुणे में इलेक्ट्रिशियन की नौकरी" जैसे बोलें',
     noResults: "आपकी खोज से कोई नौकरी मेल नहीं खाती।",
+    noJobs: "अभी कोई खुली नौकरी नहीं है। जल्द वापस देखें।",
+    loading: "नौकरियाँ लोड हो रही हैं…",
+    loadError: "नौकरियाँ लोड नहीं हो सकीं। कृपया रिफ्रेश करें।",
     apply: "अभी आवेदन करें",
-    save: "सहेजें"
+    applied: "आवेदन हो गया",
+    applying: "आवेदन हो रहा है…",
+    save: "सहेजें",
+    saved: "सहेजा गया",
+    loginToApply: "आवेदन के लिए लॉगिन करें।",
+    workerOnly: "केवल नौकरी खोजने वाले आवेदन कर सकते हैं।",
+    profileRequired: "कृपया पहले अपनी प्रोफाइल बनाएं।",
+    applyError: "आवेदन नहीं हो सका। कृपया पुनः प्रयास करें।",
+    saveError: "नौकरी सेव नहीं हो सकी। कृपया पुनः प्रयास करें।"
   }
 };
+
+const TITLE_LABELS = {
+  Electrician: { en: "Electrician", hi: "इलेक्ट्रिशियन" },
+  Plumber: { en: "Plumber", hi: "प्लंबर" },
+  Driver: { en: "Driver", hi: "ड्राइवर" },
+  "Delivery Executive": { en: "Delivery Executive", hi: "डिलीवरी एग्जीक्यूटिव" },
+  "Security Guard": { en: "Security Guard", hi: "सिक्योरिटी गार्ड" },
+  "Factory Worker": { en: "Factory Worker", hi: "फैक्ट्री वर्कर" },
+  Welder: { en: "Welder", hi: "वेल्डर" },
+  Housekeeping: { en: "Housekeeping", hi: "हाउसकीपिंग" },
+  Cook: { en: "Cook", hi: "रसोइया" },
+  Other: { en: "Other", hi: "अन्य" }
+};
+
+const TYPE_LABELS = {
+  "Full Time": { en: "Full Time", hi: "पूर्णकालिक" },
+  "Part Time": { en: "Part Time", hi: "अंशकालिक" },
+  Contract: { en: "Contract", hi: "कॉन्ट्रैक्ट" },
+  "Daily Wage": { en: "Daily Wage", hi: "दैनिक मजदूरी" }
+};
+
+const JOB_VISUALS = {
+  Electrician: { icon: "⚡", color: "#FEF3C7", iconBg: "#F97316" },
+  Plumber: { icon: "🔧", color: "#DBEAFE", iconBg: "#2563EB" },
+  Driver: { icon: "🚗", color: "#D1FAE5", iconBg: "#22C55E" },
+  "Delivery Executive": { icon: "🚴", color: "#DBEAFE", iconBg: "#2563EB" },
+  "Security Guard": { icon: "🛡️", color: "#EDE9FE", iconBg: "#7C3AED" },
+  "Factory Worker": { icon: "🏭", color: "#FEF3C7", iconBg: "#F97316" },
+  Welder: { icon: "🔩", color: "#EDE9FE", iconBg: "#7C3AED" },
+  Housekeeping: { icon: "🧹", color: "#D1FAE5", iconBg: "#22C55E" },
+  Cook: { icon: "👨‍🍳", color: "#FFEDD5", iconBg: "#F97316" },
+  Other: { icon: "💼", color: "#F1F5F9", iconBg: "#64748B" }
+};
+
 const mockVoiceQueries = {
   en: "electrician pune",
   hi: "इलेक्ट्रिशियन पुणे"
 };
-const jobs = [
-  {
-    title: { en: "Electrician", hi: "इलेक्ट्रिशियन" },
-    company: "PowerFix Solutions",
-    location: { en: "Pune", hi: "पुणे" },
-    salary: "₹22k - ₹30k",
-    type: { en: "Full Time", hi: "पूर्णकालिक" },
-    icon: "⚡",
-    color: "#FEF3C7",
-    iconBg: "#F97316",
-    badge: { en: "Urgent", hi: "अर्जेंट" },
-    badgeColor: "bg-red-50 text-red-600 border-red-100",
-    keywords: "electrician pune powerfix"
-  },
-  {
-    title: { en: "Delivery Executive", hi: "डिलीवरी एग्जीक्यूटिव" },
-    company: "QuickShip India",
-    location: { en: "Mumbai", hi: "मुंबई" },
-    salary: "₹18k - ₹28k",
-    type: { en: "Part Time", hi: "अंशकालिक" },
-    icon: "🚴",
-    color: "#DBEAFE",
-    iconBg: "#2563EB",
-    badge: { en: "New", hi: "नई" },
-    badgeColor: "bg-green-50 text-green-600 border-green-100",
-    keywords: "delivery mumbai quickship"
-  },
-  {
-    title: { en: "Driver", hi: "ड्राइवर" },
-    company: "SafeRide Logistics",
-    location: { en: "Bangalore", hi: "बैंगलोर" },
-    salary: "₹25k - ₹35k",
-    type: { en: "Full Time", hi: "पूर्णकालिक" },
-    icon: "🚗",
-    color: "#D1FAE5",
-    iconBg: "#22C55E",
-    badge: { en: "Top Pay", hi: "टॉप पे" },
-    badgeColor: "bg-blue-50 text-blue-600 border-blue-100",
-    keywords: "driver bangalore logistics"
-  },
-  {
-    title: { en: "Welder", hi: "वेल्डर" },
-    company: "MetalCraft Industries",
-    location: { en: "Hyderabad", hi: "हैदराबाद" },
-    salary: "₹24k - ₹32k",
-    type: { en: "Full Time", hi: "पूर्णकालिक" },
-    icon: "🔧",
-    color: "#EDE9FE",
-    iconBg: "#7C3AED",
-    badge: { en: "Hot", hi: "हॉट" },
-    badgeColor: "bg-orange-50 text-orange-600 border-orange-100",
-    keywords: "welder hyderabad metalcraft"
-  }
-];
-function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled }) {
+
+function formatSalary(job, lang) {
+  const min = Number(job.salaryMin) || 0;
+  const max = Number(job.salaryMax) || 0;
+  const fmt = (n) => `₹${n.toLocaleString("en-IN")}`;
+  if (min && max) return `${fmt(min)} – ${fmt(max)}`;
+  if (min) return `${fmt(min)}+`;
+  if (max) return fmt(max);
+  return "—";
+}
+
+function jobTitleLabel(title, lang) {
+  return TITLE_LABELS[title]?.[lang] ?? title;
+}
+
+function jobTypeLabel(type, lang) {
+  return TYPE_LABELS[type]?.[lang] ?? type;
+}
+
+function jobVisual(title) {
+  return JOB_VISUALS[title] ?? JOB_VISUALS.Other;
+}
+
+function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginClick, onCreateProfileClick }) {
   const txt = copy[lang];
+  const { user, profile, candidateProfile } = useAuth();
   const searchInputRef = useRef(null);
   const [query, setQuery] = useState("");
   const [voiceListening, setVoiceListening] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [appliedJobIds, setAppliedJobIds] = useState(new Set());
+  const [savedByJobId, setSavedByJobId] = useState({});
+  const [actionJobId, setActionJobId] = useState(null);
+  const [actionError, setActionError] = useState(null);
+
+  const loadJobs = useCallback(async () => {
+    if (!isFirebaseConfigured) {
+      setJobs([]);
+      setLoading(false);
+      setLoadError(txt.loadError);
+      return;
+    }
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const openJobs = await listOpenJobs();
+      setJobs(openJobs);
+    } catch (err) {
+      console.error("Failed to load jobs:", err);
+      setLoadError(txt.loadError);
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [txt.loadError]);
+
+  useEffect(() => {
+    loadJobs();
+  }, [loadJobs]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWorkerState() {
+      if (!user || profile?.role !== USER_ROLES.WORKER) {
+        setAppliedJobIds(new Set());
+        setSavedByJobId({});
+        return;
+      }
+      try {
+        const [apps, saved] = await Promise.all([
+          listCandidateApplications(user.uid),
+          listSavedJobIds(user.uid)
+        ]);
+        if (cancelled) return;
+        setAppliedJobIds(new Set(apps.map((a) => a.jobId)));
+        const map = {};
+        saved.forEach((s) => {
+          map[s.jobId] = s.id;
+        });
+        setSavedByJobId(map);
+      } catch (err) {
+        console.error("Failed to load worker job state:", err);
+      }
+    }
+    loadWorkerState();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, profile?.role]);
+
   useEffect(() => {
     if (!browseMode) return;
     const timer = window.setTimeout(() => {
@@ -108,6 +209,7 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled }) {
     }, 400);
     return () => window.clearTimeout(timer);
   }, [browseMode, onBrowseModeHandled, lang]);
+
   const startVoiceSearch = () => {
     if (voiceListening) return;
     setVoiceListening(true);
@@ -116,19 +218,93 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled }) {
       setVoiceListening(false);
     }, 1800);
   };
+
+  const handleApply = async (job) => {
+    setActionError(null);
+    if (!user) {
+      onLoginClick?.();
+      return;
+    }
+    if (profile?.role !== USER_ROLES.WORKER) {
+      setActionError(txt.workerOnly);
+      return;
+    }
+    if (!profile?.onboardingComplete && !candidateProfile) {
+      onCreateProfileClick?.();
+      return;
+    }
+    setActionJobId(job.id);
+    try {
+      const result = await applyToJob({
+        candidateId: user.uid,
+        job,
+        candidateName: candidateProfile?.fullName || profile?.displayName || "",
+        candidatePhone: user.phoneNumber || candidateProfile?.phone || ""
+      });
+      setAppliedJobIds((prev) => new Set([...prev, job.id]));
+      if (result.alreadyApplied) {
+        // already marked applied
+      }
+    } catch (err) {
+      console.error("Apply failed:", err);
+      setActionError(txt.applyError);
+    } finally {
+      setActionJobId(null);
+    }
+  };
+
+  const handleSaveToggle = async (job) => {
+    setActionError(null);
+    if (!user) {
+      onLoginClick?.();
+      return;
+    }
+    if (profile?.role !== USER_ROLES.WORKER) {
+      setActionError(txt.workerOnly);
+      return;
+    }
+    setActionJobId(`save-${job.id}`);
+    try {
+      const existingId = savedByJobId[job.id];
+      if (existingId) {
+        await unsaveJob(existingId);
+        setSavedByJobId((prev) => {
+          const next = { ...prev };
+          delete next[job.id];
+          return next;
+        });
+      } else {
+        const saved = await saveJob({ candidateId: user.uid, job });
+        setSavedByJobId((prev) => ({ ...prev, [job.id]: saved.id }));
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
+      setActionError(txt.saveError);
+    } finally {
+      setActionJobId(null);
+    }
+  };
+
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredJobs = normalizedQuery ? jobs.filter((job) => {
-    const haystack = [
-      job.title.en,
-      job.title.hi,
-      job.company,
-      job.location.en,
-      job.location.hi,
-      job.keywords
-    ].join(" ").toLowerCase();
-    return normalizedQuery.split(/\s+/).every((term) => haystack.includes(term));
-  }) : jobs;
-  return <section id="jobs" className="bg-[#F8FAFC] py-20 px-4 scroll-mt-24">
+  const filteredJobs = normalizedQuery
+    ? jobs.filter((job) => {
+        const haystack = [
+          job.title,
+          jobTitleLabel(job.title, "en"),
+          jobTitleLabel(job.title, "hi"),
+          job.organizationName,
+          job.location,
+          job.employmentType,
+          ...(job.skills ?? [])
+        ]
+          .join(" ")
+          .toLowerCase();
+        return normalizedQuery.split(/\s+/).every((term) => haystack.includes(term));
+      })
+    : jobs;
+
+  return (
+    <section id="jobs" className="bg-[#F8FAFC] py-20 px-4 scroll-mt-24">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
@@ -138,36 +314,37 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled }) {
             <h2 className="text-4xl font-extrabold text-[#0F172A]">{txt.title}</h2>
             <p className="text-[#64748B] mt-2">{txt.subtitle}</p>
           </div>
-          <button className="flex items-center gap-2 text-[#2563EB] font-semibold hover:gap-3 transition-all text-sm">
+          <button
+            type="button"
+            onClick={loadJobs}
+            className="flex items-center gap-2 text-[#2563EB] font-semibold hover:gap-3 transition-all text-sm"
+          >
             {txt.viewAll} <ArrowRight size={16} />
           </button>
         </div>
 
-        {
-    /* Job search — type or voice */
-  }
         <div className="mb-10 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search
-    size={20}
-    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none"
-  />
+                size={20}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none"
+              />
               <input
-    ref={searchInputRef}
-    type="search"
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-    placeholder={txt.searchPlaceholder}
-    className="w-full rounded-xl border-2 border-[#E2E8F0] bg-[#F8FAFC] py-3.5 pl-12 pr-4 text-base text-[#0F172A] placeholder:text-[#94A3B8] outline-none transition-colors focus:border-[#2563EB] focus:bg-white"
-  />
+                ref={searchInputRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={txt.searchPlaceholder}
+                className="w-full rounded-xl border-2 border-[#E2E8F0] bg-[#F8FAFC] py-3.5 pl-12 pr-4 text-base text-[#0F172A] placeholder:text-[#94A3B8] outline-none transition-colors focus:border-[#2563EB] focus:bg-white"
+              />
             </div>
             <button
-    type="button"
-    onClick={startVoiceSearch}
-    disabled={voiceListening}
-    className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F97316] px-6 py-3.5 text-base font-bold text-white transition-all hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-70 sm:min-w-[11rem]"
-  >
+              type="button"
+              onClick={startVoiceSearch}
+              disabled={voiceListening}
+              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F97316] px-6 py-3.5 text-base font-bold text-white transition-all hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-70 sm:min-w-[11rem]"
+            >
               {voiceListening ? <Loader2 size={20} className="animate-spin" /> : <Mic size={20} />}
               {voiceListening ? txt.listening : txt.voiceSearch}
             </button>
@@ -175,64 +352,110 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled }) {
           <p className="mt-3 text-sm text-[#94A3B8]">{txt.voiceHint}</p>
         </div>
 
-        {filteredJobs.length === 0 ? <p className="rounded-2xl border border-dashed border-[#E2E8F0] bg-white px-6 py-12 text-center text-[#64748B]">
-            {txt.noResults}
-          </p> : <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {filteredJobs.map((job, i) => <motion.div
-    key={job.company + job.title.en}
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.4, delay: i * 0.1 }}
-    className="bg-white rounded-2xl p-6 shadow-sm border border-[#E2E8F0] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
-  >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div
-    className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
-    style={{ background: job.color }}
-  >
-                      {job.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-[#0F172A] group-hover:text-[#2563EB] transition-colors">
-                        {job.title[lang]}
-                      </h3>
-                      <p className="text-sm text-[#64748B]">{job.company}</p>
-                    </div>
-                  </div>
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full border ${job.badgeColor}`}>
-                    {job.badge[lang]}
-                  </span>
-                </div>
+        {actionError && (
+          <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{actionError}</p>
+        )}
 
-                <div className="flex flex-wrap gap-3 mb-5">
-                  <div className="flex items-center gap-1.5 text-sm text-[#64748B]">
-                    <MapPin size={14} className="text-[#2563EB]" />
-                    {job.location[lang]}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-sm text-[#64748B]">
-                    <Briefcase size={14} className="text-[#F97316]" />
-                    {job.type[lang]}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-sm font-bold text-[#22C55E]">
-                    {job.salary}/mo
-                  </div>
-                </div>
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 rounded-2xl border border-[#E2E8F0] bg-white px-6 py-16 text-[#64748B]">
+            <Loader2 className="h-5 w-5 animate-spin text-[#2563EB]" />
+            {txt.loading}
+          </div>
+        ) : loadError ? (
+          <p className="rounded-2xl border border-dashed border-red-200 bg-white px-6 py-12 text-center text-red-600">
+            {loadError}
+          </p>
+        ) : filteredJobs.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-[#E2E8F0] bg-white px-6 py-12 text-center text-[#64748B]">
+            {jobs.length === 0 ? txt.noJobs : txt.noResults}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {filteredJobs.map((job, i) => {
+              const visual = jobVisual(job.title);
+              const isApplied = appliedJobIds.has(job.id);
+              const isSaved = Boolean(savedByJobId[job.id]);
+              const applying = actionJobId === job.id;
+              const saving = actionJobId === `save-${job.id}`;
 
-                <div className="flex gap-3">
-                  <button className="flex-1 bg-[#2563EB] text-white font-bold py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors hover:shadow-lg hover:shadow-blue-200">
-                    {txt.apply}
-                  </button>
-                  <button className="px-4 py-3 border-2 border-[#E2E8F0] rounded-xl text-sm font-semibold text-[#64748B] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors">
-                    {txt.save}
-                  </button>
-                </div>
-              </motion.div>)}
-          </div>}
+              return (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.3) }}
+                  className="bg-white rounded-2xl p-6 shadow-sm border border-[#E2E8F0] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+                        style={{ background: visual.color }}
+                      >
+                        {visual.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-[#0F172A] group-hover:text-[#2563EB] transition-colors truncate">
+                          {jobTitleLabel(job.title, lang)}
+                        </h3>
+                        <p className="text-sm text-[#64748B] truncate">{job.organizationName}</p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-xs font-bold px-3 py-1 rounded-full border bg-green-50 text-green-600 border-green-100">
+                      {jobTypeLabel(job.employmentType, lang)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 mb-5">
+                    <div className="flex items-center gap-1.5 text-sm text-[#64748B]">
+                      <MapPin size={14} className="text-[#2563EB]" />
+                      {job.location}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm text-[#64748B]">
+                      <Briefcase size={14} className="text-[#F97316]" />
+                      {jobTypeLabel(job.employmentType, lang)}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm font-bold text-[#22C55E]">
+                      {formatSalary(job, lang)}
+                      {lang === "hi" ? "/माह" : "/mo"}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleApply(job)}
+                      disabled={isApplied || applying}
+                      className="flex-1 flex items-center justify-center gap-2 bg-[#2563EB] text-white font-bold py-3 rounded-xl text-sm hover:bg-blue-700 transition-colors hover:shadow-lg hover:shadow-blue-200 disabled:cursor-not-allowed disabled:bg-[#94A3B8]"
+                    >
+                      {applying ? <Loader2 size={16} className="animate-spin" /> : null}
+                      {isApplied ? txt.applied : applying ? txt.applying : txt.apply}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveToggle(job)}
+                      disabled={saving}
+                      className={`px-4 py-3 border-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 ${isSaved ? "border-[#2563EB] text-[#2563EB] bg-blue-50" : "border-[#E2E8F0] text-[#64748B] hover:border-[#2563EB] hover:text-[#2563EB]"}`}
+                    >
+                      {saving ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : isSaved ? (
+                        <BookmarkCheck size={16} />
+                      ) : (
+                        <Bookmark size={16} />
+                      )}
+                      {isSaved ? txt.saved : txt.save}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
-    </section>;
+    </section>
+  );
 }
-export {
-  FeaturedJobs
-};
+
+export { FeaturedJobs };

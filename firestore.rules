@@ -78,9 +78,21 @@ service cloud.firestore {
     // ---- candidates/ ----
     // Workers own their candidate profile; employers read when hiring (future).
     match /candidates/{uid} {
-      allow read: if isOwner(uid);
+      allow read: if isOwner(uid) || isEmployer();
       allow create, update: if isOwner(uid) && userDoc().role == 'worker';
       allow delete: if false;
+    }
+
+    // ---- savedJobs/ ----
+    // Workers can save/unsave jobs for themselves.
+    match /savedJobs/{savedId} {
+      allow read: if isSignedIn()
+        && resource.data.candidateId == request.auth.uid;
+      allow create: if isSignedIn()
+        && request.resource.data.candidateId == request.auth.uid;
+      allow delete: if isSignedIn()
+        && resource.data.candidateId == request.auth.uid;
+      allow update: if false;
     }
 
     // Deny everything else by default.

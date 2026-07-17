@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Mic, Menu, User, LogOut } from "lucide-react";
+import { Mic, Menu, User, LogOut, Building2, Briefcase, LayoutDashboard } from "lucide-react";
+import logo from "@/assets/Just_logo.jpg";
+import { useNavigate } from "react-router";
 import {
   Sheet,
   SheetContent,
@@ -25,6 +27,9 @@ const t = {
     aboutUs: "About Us",
     login: "Login",
     createProfile: "Create Profile",
+    setupCompany: "Setup Company",
+    postJob: "Post a Job",
+    dashboard: "Dashboard",
     menu: "Menu",
     switchLang: "Switch to Hindi",
     myAccount: "My Account",
@@ -40,6 +45,9 @@ const t = {
     aboutUs: "हमारे बारे में",
     login: "लॉगिन",
     createProfile: "प्रोफाइल बनाएं",
+    setupCompany: "कंपनी सेटअप",
+    postJob: "नौकरी पोस्ट करें",
+    dashboard: "डैशबोर्ड",
     menu: "मेनू",
     switchLang: "अंग्रेज़ी में बदलें",
     myAccount: "मेरा खाता",
@@ -55,7 +63,7 @@ const navLinks = [
   { key: "successStories", id: "stories" },
   { key: "aboutUs", id: "cta" }
 ];
-function AccountMenu({ txt, phone, roleLabel, onSignOut, triggerClassName }) {
+function AccountMenu({ txt, phone, roleLabel, onSignOut, onDashboardClick, showDashboard, triggerClassName }) {
   return <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button type="button" aria-label={txt.myAccount} className={triggerClassName}>
@@ -72,6 +80,13 @@ function AccountMenu({ txt, phone, roleLabel, onSignOut, triggerClassName }) {
           {roleLabel && <p className="text-xs font-medium text-[#64748B]">{roleLabel}</p>}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {showDashboard && <DropdownMenuItem
+    onClick={onDashboardClick}
+    className="cursor-pointer"
+  >
+          <LayoutDashboard className="size-4" />
+          {txt.dashboard}
+        </DropdownMenuItem>}
         <DropdownMenuItem
     onClick={onSignOut}
     className="cursor-pointer text-red-600 focus:text-red-600"
@@ -82,14 +97,26 @@ function AccountMenu({ txt, phone, roleLabel, onSignOut, triggerClassName }) {
       </DropdownMenuContent>
     </DropdownMenu>;
 }
-function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCreateProfile = true }) {
+function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetupCompanyClick, onPostJobClick, onDashboardClick, showCreateProfile = true, showSetupCompany = false, showPostJob = false, showDashboard = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const txt = t[lang];
   const { user, profile, signOut } = useAuth();
   const isLoggedIn = Boolean(user);
   const roleLabel = profile?.role === "employer" ? txt.roleEmployer : profile?.role === "worker" ? txt.roleWorker : null;
   const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    if (window.location.pathname !== "/") {
+      navigate("/");
+      window.setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    }
+    setMenuOpen(false);
+  };
+  const goHome = () => {
+    navigate("/");
     setMenuOpen(false);
   };
   const handleLangToggle = () => {
@@ -117,11 +144,13 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCr
 
               <div
     className="flex items-center gap-2 cursor-pointer min-w-0"
-    onClick={() => scrollTo("hero")}
+    onClick={goHome}
   >
-                <div className="w-9 h-9 bg-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
-                  <Mic size={18} className="text-white" />
-                </div>
+                <img
+    src={logo}
+    alt="Bharat Gig"
+    className="h-9 w-auto shrink-0 block -translate-y-1"
+  />
                 <span className="text-xl font-bold text-[#0F172A] truncate">
                   Bharat<span className="text-[#2563EB]">Gig</span>
                 </span>
@@ -156,6 +185,8 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCr
     phone={user.phoneNumber}
     roleLabel={roleLabel}
     onSignOut={signOut}
+    onDashboardClick={onDashboardClick}
+    showDashboard={showDashboard}
     triggerClassName="flex items-center justify-center rounded-full transition-transform hover:scale-105"
   /> : <button
     onClick={onLoginClick}
@@ -169,6 +200,20 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCr
   >
                 🎤 {txt.createProfile}
               </button>}
+              {showSetupCompany && <button
+    onClick={onSetupCompanyClick}
+    className="flex items-center gap-2 bg-[#2563EB] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200"
+  >
+                <Building2 className="h-4 w-4" />
+                {txt.setupCompany}
+              </button>}
+              {showPostJob && <button
+    onClick={onPostJobClick}
+    className="flex items-center gap-2 bg-[#2563EB] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200"
+  >
+                <Briefcase className="h-4 w-4" />
+                {txt.postJob}
+              </button>}
             </div>
 
             {
@@ -180,6 +225,8 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCr
     phone={user.phoneNumber}
     roleLabel={roleLabel}
     onSignOut={signOut}
+    onDashboardClick={onDashboardClick}
+    showDashboard={showDashboard}
     triggerClassName="flex items-center justify-center w-10 h-10 rounded-full"
   /> : <button
     type="button"
@@ -196,6 +243,22 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCr
     className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#F97316] text-white hover:bg-orange-500 transition-colors shadow-sm"
   >
                 <Mic size={20} />
+              </button>}
+              {showSetupCompany && <button
+    type="button"
+    aria-label={txt.setupCompany}
+    onClick={onSetupCompanyClick}
+    className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2563EB] text-white hover:bg-blue-700 transition-colors shadow-sm"
+  >
+                <Building2 size={20} />
+              </button>}
+              {showPostJob && <button
+    type="button"
+    aria-label={txt.postJob}
+    onClick={onPostJobClick}
+    className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2563EB] text-white hover:bg-blue-700 transition-colors shadow-sm"
+  >
+                <Briefcase size={20} />
               </button>}
             </div>
           </div>
@@ -214,9 +277,11 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, showCr
   >
           <SheetHeader className="shrink-0 border-b border-[#E2E8F0] px-5 py-4 pr-12 text-left space-y-0">
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
-                <Mic size={18} className="text-white" />
-              </div>
+              <img
+    src={logo}
+    alt="Bharat Gig"
+    className="h-9 w-auto shrink-0 block -translate-y-1"
+  />
               <SheetTitle className="text-lg font-bold text-[#0F172A]">
                 Bharat<span className="text-[#2563EB]">Gig</span>
               </SheetTitle>
