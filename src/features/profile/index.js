@@ -1,2 +1,3 @@
 import { CreateProfileModal } from "./components/CreateProfileModal";
-export { CreateProfileModal };
+import { WorkerDashboard } from "./components/WorkerDashboard";
+export { CreateProfileModal, WorkerDashboard };

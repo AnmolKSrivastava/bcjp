@@ -4,7 +4,7 @@ import { AnimatePresence } from "motion/react";
 import { LanguageModal } from "@/shared/common/LanguageModal";
 import { LoginModal, RoleSelectionModal, useAuth } from "@/features/auth";
 import { RECAPTCHA_CONTAINER_ID } from "@/features/auth/hooks/usePhoneAuth";
-import { CreateProfileModal } from "@/features/profile";
+import { CreateProfileModal, WorkerDashboard } from "@/features/profile";
 import { CreateCompanyModal, PostJobModal, EmployerDashboard } from "@/features/employer";
 import { Navbar } from "@/shared/layout/Navbar";
 import { Footer } from "@/shared/layout/Footer";
@@ -142,6 +142,10 @@ function App() {
     }
     if (profile?.role === USER_ROLES.EMPLOYER) {
       navigate("/employer/dashboard");
+      return;
+    }
+    if (profile?.role === USER_ROLES.WORKER) {
+      navigate("/worker/dashboard");
     }
   };
 
@@ -171,7 +175,10 @@ function App() {
             showCreateProfile={!profile || profile.role === USER_ROLES.WORKER}
             showSetupCompany={profile?.role === USER_ROLES.EMPLOYER && !profile.onboardingComplete}
             showPostJob={profile?.role === USER_ROLES.EMPLOYER && profile.onboardingComplete}
-            showDashboard={profile?.role === USER_ROLES.EMPLOYER && profile.onboardingComplete}
+            showDashboard={
+              (profile?.role === USER_ROLES.EMPLOYER || profile?.role === USER_ROLES.WORKER) &&
+              Boolean(profile?.onboardingComplete)
+            }
           />
           <LoginModal open={loginOpen} onOpenChange={setLoginOpen} lang={activeLang} />
           <RoleSelectionModal open={needsOnboarding} lang={activeLang} />
@@ -200,6 +207,15 @@ function App() {
                   lang={activeLang}
                   onPostJobClick={handlePostJobClick}
                   onSetupCompanyClick={handleSetupCompanyClick}
+                />
+              }
+            />
+            <Route
+              path="/worker/dashboard"
+              element={
+                <WorkerDashboard
+                  lang={activeLang}
+                  onCreateProfileClick={handleCreateProfileClick}
                 />
               }
             />

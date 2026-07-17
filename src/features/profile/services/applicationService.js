@@ -41,7 +41,13 @@ async function listCandidateApplications(candidateId) {
     limit(50)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const apps = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  apps.sort((a, b) => {
+    const aTime = a.createdAt?.toMillis?.() ?? a.createdAt?.seconds * 1000 ?? 0;
+    const bTime = b.createdAt?.toMillis?.() ?? b.createdAt?.seconds * 1000 ?? 0;
+    return bTime - aTime;
+  });
+  return apps;
 }
 
 async function listOrganizationApplications(organizationId, max = 100) {
@@ -130,6 +136,22 @@ async function listSavedJobIds(candidateId) {
   return snapshot.docs.map((d) => ({ id: d.id, jobId: d.data().jobId }));
 }
 
+async function listSavedJobs(candidateId) {
+  const q = query(
+    savedJobsCol(),
+    where("candidateId", "==", candidateId),
+    limit(100)
+  );
+  const snapshot = await getDocs(q);
+  const saved = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  saved.sort((a, b) => {
+    const aTime = a.createdAt?.toMillis?.() ?? a.createdAt?.seconds * 1000 ?? 0;
+    const bTime = b.createdAt?.toMillis?.() ?? b.createdAt?.seconds * 1000 ?? 0;
+    return bTime - aTime;
+  });
+  return saved;
+}
+
 async function saveJob({ candidateId, job }) {
   const existing = await findSavedJob(candidateId, job.id);
   if (existing) return existing;
@@ -139,7 +161,9 @@ async function saveJob({ candidateId, job }) {
     candidateId,
     jobId: job.id,
     organizationId: job.organizationId,
+    organizationName: job.organizationName ?? "",
     jobTitle: job.title ?? "",
+    location: job.location ?? "",
     createdAt: serverTimestamp()
   };
   await setDoc(ref, saved);
@@ -158,6 +182,7 @@ export {
   listJobApplications,
   listOrganizationApplications,
   listSavedJobIds,
+  listSavedJobs,
   saveJob,
   unsaveJob,
   updateApplicationStatus
