@@ -59,7 +59,11 @@ const t = {
     updateStatus: "Update status",
     employerOnly: "This dashboard is for employers only.",
     setupCompany: "Please set up your company first.",
-    goSetup: "Setup Company"
+    goSetup: "Setup Company",
+    statApplications: "Applications",
+    statShortlisted: "Shortlisted",
+    statHired: "Hired",
+    call: "Call"
   },
   hi: {
     title: "नियोक्ता डैशबोर्ड",
@@ -87,9 +91,19 @@ const t = {
     updateStatus: "स्थिति अपडेट करें",
     employerOnly: "यह डैशबोर्ड केवल नियोक्ताओं के लिए है।",
     setupCompany: "कृपया पहले अपनी कंपनी सेटअप करें।",
-    goSetup: "कंपनी सेटअप"
+    goSetup: "कंपनी सेटअप",
+    statApplications: "आवेदन",
+    statShortlisted: "शॉर्टलिस्ट",
+    statHired: "चयनित",
+    call: "कॉल"
   }
 };
+
+function initials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
+}
 
 function statusLabel(value, lang) {
   return APPLICATION_STATUSES.find((s) => s.value === value)?.[lang] ?? value;
@@ -187,6 +201,17 @@ function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick })
     });
     return map;
   }, [applications]);
+
+  const stats = useMemo(() => {
+    const total = applications.length;
+    const shortlisted = applications.filter((a) => a.status === "shortlisted").length;
+    const hired = applications.filter((a) => a.status === "hired").length;
+    return [
+      { key: "applications", label: txt.statApplications, value: total, color: "#2563EB" },
+      { key: "shortlisted", label: txt.statShortlisted, value: shortlisted, color: "#22C55E" },
+      { key: "hired", label: txt.statHired, value: hired, color: "#F97316" }
+    ];
+  }, [applications, txt.statApplications, txt.statShortlisted, txt.statHired]);
 
   const handleCloseJob = async (jobId) => {
     setBusyId(jobId);
@@ -306,6 +331,20 @@ function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick })
           </div>
         ) : (
           <>
+            <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {stats.map((stat) => (
+                <div
+                  key={stat.key}
+                  className="rounded-2xl border border-[#E2E8F0] bg-white p-5 text-center shadow-sm"
+                >
+                  <p className="text-3xl font-extrabold" style={{ color: stat.color }}>
+                    {stat.value}
+                  </p>
+                  <p className="mt-1 text-sm text-[#64748B]">{stat.label}</p>
+                </div>
+              ))}
+            </section>
+
             <section>
               <h2 className="mb-4 text-lg font-bold text-[#0F172A]">{txt.myJobs}</h2>
               {jobs.length === 0 ? (
@@ -418,21 +457,35 @@ function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick })
                         className="rounded-2xl border border-[#E2E8F0] bg-white p-4 sm:p-5"
                       >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-base font-bold text-[#0F172A]">{name}</p>
-                            <p className="text-sm text-[#64748B]">
-                              {txt.job}: {app.jobTitle}
-                              {app.location ? ` · ${app.location}` : ""}
-                            </p>
-                            {phone && (
-                              <p className="mt-1 inline-flex items-center gap-1 text-sm text-[#64748B]">
-                                <Phone className="h-3.5 w-3.5" />
-                                {phone}
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-[#2563EB]">
+                              {initials(name)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-base font-bold text-[#0F172A]">{name}</p>
+                              <p className="text-sm text-[#64748B]">
+                                {txt.job}: {app.jobTitle}
+                                {app.location ? ` · ${app.location}` : ""}
                               </p>
-                            )}
-                            <p className="mt-1 text-xs text-[#94A3B8]">{formatDate(app.createdAt)}</p>
+                              {phone && (
+                                <p className="mt-1 inline-flex items-center gap-1 text-sm text-[#64748B]">
+                                  <Phone className="h-3.5 w-3.5" />
+                                  {phone}
+                                </p>
+                              )}
+                              <p className="mt-1 text-xs text-[#94A3B8]">{formatDate(app.createdAt)}</p>
+                            </div>
                           </div>
                           <div className="flex flex-col gap-2 sm:items-end">
+                            {phone && (
+                              <a
+                                href={`tel:${phone}`}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
+                              >
+                                <Phone className="h-4 w-4" />
+                                {txt.call}
+                              </a>
+                            )}
                             <label className="text-xs font-semibold text-[#64748B]">
                               {txt.updateStatus}
                             </label>

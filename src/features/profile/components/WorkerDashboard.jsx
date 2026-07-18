@@ -1,16 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router";
 import {
   ArrowLeft,
   Bookmark,
   Briefcase,
+  CheckCircle2,
   Loader2,
   MapPin,
+  Send,
   Trash2,
   User
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import {
+  applyToJob,
   listCandidateApplications,
   listSavedJobs,
   unsaveJob
@@ -48,7 +51,12 @@ const t = {
     workerOnly: "This dashboard is for job seekers only.",
     profileRequired: "Please create your profile first.",
     createProfile: "Create Profile",
-    profileSummary: "Your Profile"
+    profileSummary: "Your Profile",
+    statApplications: "Applications",
+    statShortlisted: "Shortlisted",
+    statSaved: "Saved Jobs",
+    apply: "Apply",
+    applied: "Applied"
   },
   hi: {
     title: "मेरा डैशबोर्ड",
@@ -71,7 +79,12 @@ const t = {
     workerOnly: "यह डैशबोर्ड केवल नौकरी खोजने वालों के लिए है।",
     profileRequired: "कृपया पहले अपनी प्रोफाइल बनाएं।",
     createProfile: "प्रोफाइल बनाएं",
-    profileSummary: "आपकी प्रोफाइल"
+    profileSummary: "आपकी प्रोफाइल",
+    statApplications: "आवेदन",
+    statShortlisted: "शॉर्टलिस्ट",
+    statSaved: "सेव की गई",
+    apply: "आवेदन करें",
+    applied: "आवेदन किया"
   }
 };
 
@@ -148,6 +161,44 @@ function WorkerDashboard({ lang = "en", onCreateProfileClick }) {
     if (authLoading || profileLoading) return;
     loadDashboard();
   }, [authLoading, profileLoading, loadDashboard]);
+
+  const appliedJobIds = useMemo(
+    () => new Set(applications.map((a) => a.jobId).filter(Boolean)),
+    [applications]
+  );
+
+  const stats = useMemo(() => {
+    const total = applications.length;
+    const shortlisted = applications.filter((a) => a.status === "shortlisted").length;
+    return [
+      { key: "applications", label: txt.statApplications, value: total, color: "#2563EB" },
+      { key: "shortlisted", label: txt.statShortlisted, value: shortlisted, color: "#22C55E" },
+      { key: "saved", label: txt.statSaved, value: savedJobs.length, color: "#F97316" }
+    ];
+  }, [applications, savedJobs.length, txt.statApplications, txt.statShortlisted, txt.statSaved]);
+
+  const handleApplySaved = async (saved) => {
+    const job = jobDetails[saved.jobId];
+    if (!job || !user?.uid) return;
+    setBusyId(saved.id);
+    try {
+      const result = await applyToJob({
+        candidateId: user.uid,
+        job: { id: saved.jobId, ...job },
+        candidateName: candidateProfile?.fullName || "",
+        candidatePhone: user.phoneNumber || candidateProfile?.phone || ""
+      });
+      setApplications((prev) => {
+        if (prev.some((a) => a.jobId === saved.jobId)) return prev;
+        return [result, ...prev];
+      });
+    } catch (err) {
+      console.error("Apply from saved failed:", err);
+      setError(txt.loadError);
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const handleRemoveSaved = async (savedDocId) => {
     setBusyId(savedDocId);
@@ -248,6 +299,20 @@ function WorkerDashboard({ lang = "en", onCreateProfileClick }) {
           </div>
         ) : (
           <>
+            <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {stats.map((stat) => (
+                <div
+                  key={stat.key}
+                  className="rounded-2xl border border-[#E2E8F0] bg-white p-5 text-center shadow-sm"
+                >
+                  <p className="text-3xl font-extrabold" style={{ color: stat.color }}>
+                    {stat.value}
+                  </p>
+                  <p className="mt-1 text-sm text-[#64748B]">{stat.label}</p>
+                </div>
+              ))}
+            </section>
+
             <section>
               <h2 className="mb-4 text-lg font-bold text-[#0F172A]">{txt.applications}</h2>
               {applications.length === 0 ? (
@@ -313,6 +378,8 @@ function WorkerDashboard({ lang = "en", onCreateProfileClick }) {
                   {savedJobs.map((saved) => {
                     const job = jobDetails[saved.jobId];
                     const closed = job && job.status !== "open";
+                    const hasApplied = appliedJobIds.has(saved.jobId);
+                    const canApply = job && !closed && !hasApplied;
                     return (
                       <div
                         key={saved.id}
@@ -341,19 +408,41 @@ function WorkerDashboard({ lang = "en", onCreateProfileClick }) {
                               )}
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSaved(saved.id)}
-                            disabled={busyId === saved.id}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] px-3 py-2 text-xs font-semibold text-[#64748B] hover:border-red-300 hover:text-red-600 disabled:opacity-60"
-                          >
-                            {busyId === saved.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                            {txt.remove}
-                          </button>
+                          <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
+                            {canApply ? (
+                              <button
+                                type="button"
+                                onClick={() => handleApplySaved(saved)}
+                                disabled={busyId === saved.id}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2563EB] px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60"
+                              >
+                                {busyId === saved.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="h-3.5 w-3.5" />
+                                )}
+                                {txt.apply}
+                              </button>
+                            ) : hasApplied ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-xl bg-green-50 px-3 py-2 text-xs font-bold text-green-700">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                {txt.applied}
+                              </span>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSaved(saved.id)}
+                              disabled={busyId === saved.id}
+                              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] px-3 py-2 text-xs font-semibold text-[#64748B] hover:border-red-300 hover:text-red-600 disabled:opacity-60"
+                            >
+                              {busyId === saved.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                              {txt.remove}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
