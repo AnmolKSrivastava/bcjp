@@ -104,6 +104,7 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
   const { user, profile, signOut } = useAuth();
   const isLoggedIn = Boolean(user);
   const roleLabel = profile?.role === "employer" ? txt.roleEmployer : profile?.role === "worker" ? txt.roleWorker : null;
+  const postJobSecondary = showCreateProfile && showPostJob;
   const scrollTo = (id) => {
     if (window.location.pathname !== "/") {
       navigate("/");
@@ -209,7 +210,9 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
               </button>}
               {showPostJob && <button
     onClick={onPostJobClick}
-    className="flex items-center gap-2 bg-[#2563EB] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200"
+    className={postJobSecondary
+      ? "flex items-center gap-2 border-2 border-[#2563EB] text-[#2563EB] text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-50 transition-all"
+      : "flex items-center gap-2 bg-[#2563EB] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200"}
   >
                 <Briefcase className="h-4 w-4" />
                 {txt.postJob}

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MapPin, Briefcase, ArrowRight, Search, Mic, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
+import { Link } from "react-router";
+import { MapPin, Briefcase, ArrowRight, Search, Mic, MicOff, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/features/auth";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { listOpenJobs } from "@/features/employer/services/jobService";
 import {
   applyToJob,
@@ -22,7 +24,12 @@ const copy = {
     searchPlaceholder: "Search by job, company, or city…",
     voiceSearch: "Voice Search",
     listening: "Listening…",
+    stopListening: "Stop",
     voiceHint: 'Try saying "electrician jobs in Pune"',
+    voiceUnsupported: "Voice search needs Chrome or Edge. Please type your search.",
+    voicePermission: "Microphone permission is needed for voice search.",
+    voiceNoSpeech: "Didn't catch that. Tap Voice Search and try again.",
+    voiceError: "Voice search failed. Please type your search.",
     noResults: "No jobs match your search.",
     noJobs: "No open jobs yet. Check back soon.",
     loading: "Loading jobs…",
@@ -32,6 +39,7 @@ const copy = {
     applying: "Applying…",
     save: "Save",
     saved: "Saved",
+    viewDetails: "View Details",
     loginToApply: "Please log in to apply.",
     workerOnly: "Only job seekers can apply.",
     profileRequired: "Please create your profile first.",
@@ -46,7 +54,12 @@ const copy = {
     searchPlaceholder: "नौकरी, कंपनी या शहर खोजें…",
     voiceSearch: "आवाज़ से खोजें",
     listening: "सुन रहे हैं…",
+    stopListening: "रोकें",
     voiceHint: '"पुणे में इलेक्ट्रिशियन की नौकरी" जैसे बोलें',
+    voiceUnsupported: "आवाज़ खोज Chrome या Edge में काम करती है। कृपया टाइप करें।",
+    voicePermission: "आवाज़ खोज के लिए माइक की अनुमति दें।",
+    voiceNoSpeech: "सुनाई नहीं दिया। फिर से आवाज़ खोज दबाएँ।",
+    voiceError: "आवाज़ खोज असफल। कृपया टाइप करें।",
     noResults: "आपकी खोज से कोई नौकरी मेल नहीं खाती।",
     noJobs: "अभी कोई खुली नौकरी नहीं है। जल्द वापस देखें।",
     loading: "नौकरियाँ लोड हो रही हैं…",
@@ -56,6 +69,7 @@ const copy = {
     applying: "आवेदन हो रहा है…",
     save: "सहेजें",
     saved: "सहेजा गया",
+    viewDetails: "विवरण देखें",
     loginToApply: "आवेदन के लिए लॉगिन करें।",
     workerOnly: "केवल नौकरी खोजने वाले आवेदन कर सकते हैं।",
     profileRequired: "कृपया पहले अपनी प्रोफाइल बनाएं।",
@@ -63,6 +77,21 @@ const copy = {
     saveError: "नौकरी सेव नहीं हो सकी। कृपया पुनः प्रयास करें।"
   }
 };
+
+/** Common spoken filler words that shouldn't block keyword matching */
+const VOICE_FILLER = new Set([
+  "jobs", "job", "in", "at", "for", "near", "the", "a", "an", "please", "find", "search",
+  "नौकरी", "नौकरियाँ", "में", "की", "के", "का", "पास", "खोजो", "दिखाओ", "मुझे", "चाहिए"
+]);
+
+function normalizeSearchQuery(raw) {
+  return String(raw ?? "")
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((term) => term && !VOICE_FILLER.has(term))
+    .join(" ");
+}
 
 const TITLE_LABELS = {
   Electrician: { en: "Electrician", hi: "इलेक्ट्रिशियन" },
@@ -97,11 +126,6 @@ const JOB_VISUALS = {
   Other: { icon: "💼", color: "#F1F5F9", iconBg: "#64748B" }
 };
 
-const mockVoiceQueries = {
-  en: "electrician pune",
-  hi: "इलेक्ट्रिशियन पुणे"
-};
-
 function formatSalary(job, lang) {
   const min = Number(job.salaryMin) || 0;
   const max = Number(job.salaryMax) || 0;
@@ -129,7 +153,6 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
   const { user, profile, candidateProfile } = useAuth();
   const searchInputRef = useRef(null);
   const [query, setQuery] = useState("");
-  const [voiceListening, setVoiceListening] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -137,6 +160,39 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
   const [savedByJobId, setSavedByJobId] = useState({});
   const [actionJobId, setActionJobId] = useState(null);
   const [actionError, setActionError] = useState(null);
+  const [voiceError, setVoiceError] = useState(null);
+
+  const handleVoiceResult = useCallback((text) => {
+    setQuery(text);
+    setVoiceError(null);
+  }, []);
+
+  const handleVoiceError = useCallback(
+    (code) => {
+      if (code === "unsupported" || code === "start-failed") {
+        setVoiceError(txt.voiceUnsupported);
+      } else if (code === "not-allowed" || code === "service-not-allowed") {
+        setVoiceError(txt.voicePermission);
+      } else if (code === "no-speech") {
+        setVoiceError(txt.voiceNoSpeech);
+      } else {
+        setVoiceError(txt.voiceError);
+      }
+    },
+    [txt.voiceUnsupported, txt.voicePermission, txt.voiceNoSpeech, txt.voiceError]
+  );
+
+  const {
+    supported: voiceSupported,
+    listening: voiceListening,
+    interimTranscript,
+    start: startSpeech,
+    stop: stopSpeech
+  } = useSpeechRecognition({
+    lang,
+    onResult: handleVoiceResult,
+    onError: handleVoiceError
+  });
 
   const loadJobs = useCallback(async () => {
     if (!isFirebaseConfigured) {
@@ -199,24 +255,21 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
       if (browseMode === "type") {
         searchInputRef.current?.focus({ preventScroll: true });
       } else if (browseMode === "voice") {
-        setVoiceListening(true);
-        window.setTimeout(() => {
-          setQuery(mockVoiceQueries[lang]);
-          setVoiceListening(false);
-        }, 1800);
+        setVoiceError(null);
+        startSpeech();
       }
       onBrowseModeHandled?.();
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [browseMode, onBrowseModeHandled, lang]);
+  }, [browseMode, onBrowseModeHandled, startSpeech]);
 
-  const startVoiceSearch = () => {
-    if (voiceListening) return;
-    setVoiceListening(true);
-    window.setTimeout(() => {
-      setQuery(mockVoiceQueries[lang]);
-      setVoiceListening(false);
-    }, 1800);
+  const toggleVoiceSearch = () => {
+    setVoiceError(null);
+    if (voiceListening) {
+      stopSpeech();
+      return;
+    }
+    startSpeech();
   };
 
   const handleApply = async (job) => {
@@ -285,7 +338,7 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
     }
   };
 
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = normalizeSearchQuery(query);
   const filteredJobs = normalizedQuery
     ? jobs.filter((job) => {
         const haystack = [
@@ -341,15 +394,33 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
             </div>
             <button
               type="button"
-              onClick={startVoiceSearch}
-              disabled={voiceListening}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F97316] px-6 py-3.5 text-base font-bold text-white transition-all hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-70 sm:min-w-[11rem]"
+              onClick={toggleVoiceSearch}
+              aria-pressed={voiceListening}
+              className={`flex shrink-0 items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-base font-bold text-white transition-all sm:min-w-[11rem] ${
+                voiceListening
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-[#F97316] hover:bg-orange-500"
+              }`}
             >
-              {voiceListening ? <Loader2 size={20} className="animate-spin" /> : <Mic size={20} />}
-              {voiceListening ? txt.listening : txt.voiceSearch}
+              {voiceListening ? <MicOff size={20} /> : <Mic size={20} />}
+              {voiceListening ? txt.stopListening : txt.voiceSearch}
             </button>
           </div>
-          <p className="mt-3 text-sm text-[#94A3B8]">{txt.voiceHint}</p>
+          {voiceListening && (
+            <p className="mt-3 flex items-center gap-2 text-sm font-medium text-[#F97316]">
+              <Loader2 size={14} className="animate-spin" />
+              {txt.listening}
+              {interimTranscript ? ` “${interimTranscript}”` : ""}
+            </p>
+          )}
+          {!voiceListening && (
+            <p className="mt-3 text-sm text-[#94A3B8]">
+              {voiceSupported ? txt.voiceHint : txt.voiceUnsupported}
+            </p>
+          )}
+          {voiceError && (
+            <p className="mt-2 text-sm text-red-600">{voiceError}</p>
+          )}
         </div>
 
         {actionError && (
@@ -388,7 +459,10 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
                   className="bg-white rounded-2xl p-6 shadow-sm border border-[#E2E8F0] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4 min-w-0">
+                    <Link
+                      to={`/jobs/${job.id}`}
+                      className="flex items-center gap-4 min-w-0"
+                    >
                       <div
                         className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
                         style={{ background: visual.color }}
@@ -401,7 +475,7 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
                         </h3>
                         <p className="text-sm text-[#64748B] truncate">{job.organizationName}</p>
                       </div>
-                    </div>
+                    </Link>
                     <span className="shrink-0 text-xs font-bold px-3 py-1 rounded-full border bg-green-50 text-green-600 border-green-100">
                       {jobTypeLabel(job.employmentType, lang)}
                     </span>
@@ -421,6 +495,13 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
                       {lang === "hi" ? "/माह" : "/mo"}
                     </div>
                   </div>
+
+                  <Link
+                    to={`/jobs/${job.id}`}
+                    className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2563EB] hover:gap-2 transition-all"
+                  >
+                    {txt.viewDetails} <ArrowRight size={14} />
+                  </Link>
 
                   <div className="flex gap-3">
                     <button

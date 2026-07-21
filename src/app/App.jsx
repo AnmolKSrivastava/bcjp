@@ -6,6 +6,7 @@ import { LoginModal, RoleSelectionModal, useAuth } from "@/features/auth";
 import { RECAPTCHA_CONTAINER_ID } from "@/features/auth/hooks/usePhoneAuth";
 import { CreateProfileModal, WorkerDashboard } from "@/features/profile";
 import { CreateCompanyModal, PostJobModal, EmployerDashboard } from "@/features/employer";
+import { JobDetailsPage } from "@/features/jobs";
 import { Navbar } from "@/shared/layout/Navbar";
 import { Footer } from "@/shared/layout/Footer";
 import { HeroSection } from "@/features/landing/components/HeroSection";
@@ -174,7 +175,7 @@ function App() {
             onDashboardClick={handleDashboardClick}
             showCreateProfile={!profile || profile.role === USER_ROLES.WORKER}
             showSetupCompany={profile?.role === USER_ROLES.EMPLOYER && !profile.onboardingComplete}
-            showPostJob={profile?.role === USER_ROLES.EMPLOYER && profile.onboardingComplete}
+            showPostJob={!profile || (profile?.role === USER_ROLES.EMPLOYER && profile.onboardingComplete)}
             showDashboard={
               (profile?.role === USER_ROLES.EMPLOYER || profile?.role === USER_ROLES.WORKER) &&
               Boolean(profile?.onboardingComplete)
@@ -215,6 +216,16 @@ function App() {
               element={
                 <WorkerDashboard
                   lang={activeLang}
+                  onCreateProfileClick={handleCreateProfileClick}
+                />
+              }
+            />
+            <Route
+              path="/jobs/:jobId"
+              element={
+                <JobDetailsPage
+                  lang={activeLang}
+                  onLoginClick={() => setLoginOpen(true)}
                   onCreateProfileClick={handleCreateProfileClick}
                 />
               }
