@@ -126,8 +126,8 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
   };
   return <>
       <nav className="sticky top-0 z-40 bg-white border-b border-[#E2E8F0] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="mx-auto max-w-[1600px] px-2 sm:px-3 lg:px-4">
+          <div className="flex items-center justify-between h-16 gap-2">
             {
     /* Left: hamburger (mobile) + logo */
   }
@@ -161,11 +161,11 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
             {
     /* Desktop nav — unchanged */
   }
-            <div className="hidden lg:flex items-center gap-6">
+            <div className="hidden lg:flex items-center gap-4 xl:gap-6">
               {navLinks.map((item) => <button
     key={item.id}
     onClick={() => scrollTo(item.id)}
-    className="text-[#64748B] hover:text-[#2563EB] font-medium text-sm transition-colors"
+    className="text-[#64748B] hover:text-[#2563EB] font-medium text-sm transition-colors whitespace-nowrap"
   >
                   {txt[item.key]}
                 </button>)}
@@ -174,10 +174,10 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
             {
     /* Desktop actions — unchanged */
   }
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2">
               <button
     onClick={onLangToggle}
-    className="flex items-center gap-1 text-sm font-medium text-[#64748B] hover:text-[#2563EB] border border-[#E2E8F0] rounded-full px-3 py-1.5 transition-colors"
+    className="flex items-center gap-1 text-sm font-medium text-[#64748B] hover:text-[#2563EB] border border-[#E2E8F0] rounded-full px-2.5 py-1.5 transition-colors shrink-0"
   >
                 🌐 {lang === "hi" ? "हिन्दी | EN" : "हिन्दी | EN"}
               </button>
@@ -190,20 +190,23 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
     showDashboard={showDashboard}
     triggerClassName="flex items-center justify-center rounded-full transition-transform hover:scale-105"
   /> : <button
+    type="button"
     onClick={onLoginClick}
-    className="text-sm font-semibold text-[#0F172A] hover:text-[#2563EB] transition-colors px-3 py-2"
+    className="flex items-center gap-1.5 border-2 border-[#0F172A] text-[#0F172A] text-sm font-bold px-3 py-2 rounded-xl hover:bg-[#0F172A] hover:text-white transition-all shrink-0"
   >
+                <User className="h-4 w-4" />
                 {txt.login}
               </button>}
               {showCreateProfile && <button
     onClick={onCreateProfileClick}
-    className="flex items-center gap-2 bg-[#F97316] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-500 transition-all hover:shadow-lg hover:shadow-orange-200"
+    className="flex items-center gap-1.5 bg-[#F97316] text-white text-sm font-bold px-3 py-2 rounded-xl hover:bg-orange-500 transition-all hover:shadow-lg hover:shadow-orange-200 shrink-0"
   >
-                🎤 {txt.createProfile}
+                <Mic className="h-4 w-4" />
+                {txt.createProfile}
               </button>}
               {showSetupCompany && <button
     onClick={onSetupCompanyClick}
-    className="flex items-center gap-2 bg-[#2563EB] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200"
+    className="flex items-center gap-1.5 bg-[#2563EB] text-white text-sm font-bold px-3 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 shrink-0"
   >
                 <Building2 className="h-4 w-4" />
                 {txt.setupCompany}
@@ -211,8 +214,8 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
               {showPostJob && <button
     onClick={onPostJobClick}
     className={postJobSecondary
-      ? "flex items-center gap-2 border-2 border-[#2563EB] text-[#2563EB] text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-50 transition-all"
-      : "flex items-center gap-2 bg-[#2563EB] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200"}
+      ? "flex items-center gap-1.5 border-2 border-[#2563EB] text-[#2563EB] text-sm font-bold px-3 py-2 rounded-xl hover:bg-blue-50 transition-all shrink-0"
+      : "flex items-center gap-1.5 bg-[#2563EB] text-white text-sm font-bold px-3 py-2 rounded-xl hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 shrink-0"}
   >
                 <Briefcase className="h-4 w-4" />
                 {txt.postJob}
@@ -235,7 +238,7 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
     type="button"
     aria-label={txt.login}
     onClick={onLoginClick}
-    className="flex items-center justify-center w-10 h-10 rounded-xl text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] transition-colors"
+    className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white transition-colors"
   >
                 <User size={20} />
               </button>}
