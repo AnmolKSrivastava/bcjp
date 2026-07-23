@@ -20,6 +20,17 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    proxy: {
+      // Local OpenAI proxy (functions/local-server.js) — key stays server-side
+      "/api/voice-profile": {
+        target: "http://localhost:8787",
+        changeOrigin: true
+      },
+      "/api/voice-tts": {
+        target: "http://localhost:8787",
+        changeOrigin: true
+      }
+    }
   },
 
   assetsInclude: ['**/*.svg', '**/*.csv'],

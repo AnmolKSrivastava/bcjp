@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const SPEECH_LOCALES = {
   en: "en-IN",
-  hi: "hi-IN"
+  hi: "hi-IN",
+  bn: "bn-IN",
+  mr: "mr-IN",
+  ta: "ta-IN"
 };
 
 function getSpeechRecognitionConstructor() {

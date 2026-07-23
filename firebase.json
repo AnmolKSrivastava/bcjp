@@ -6,6 +6,21 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local",
+        ".env",
+        ".env.local"
+      ]
+    }
+  ],
   "hosting": {
     "public": "dist",
     "ignore": [
@@ -14,6 +29,20 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/api/voice-profile",
+        "function": {
+          "functionId": "parseVoiceProfileHttp",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/api/voice-tts",
+        "function": {
+          "functionId": "synthesizeVoiceTtsHttp",
+          "region": "asia-south1"
+        }
+      },
       {
         "source": "**",
         "destination": "/index.html"

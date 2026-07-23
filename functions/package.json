@@ -1,0 +1,22 @@
+{
+  "name": "bharat-gig-functions",
+  "private": true,
+  "version": "0.0.1",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "local": "node local-server.js",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.0",
+    "openai": "^4.77.0"
+  }
+}

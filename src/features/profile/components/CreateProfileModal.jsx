@@ -10,7 +10,9 @@ import {
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-  Upload
+  Upload,
+  Mic,
+  Keyboard
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -24,6 +26,7 @@ import { Input } from "@/lib/ui/input";
 import { Label } from "@/lib/ui/label";
 import { useAuth } from "@/features/auth";
 import { saveCandidateProfile } from "../services/candidateService";
+import { VoiceInterviewPanel } from "./VoiceInterviewPanel";
 
 const OCCUPATIONS = [
   { en: "Electrician", hi: "इलेक्ट्रिशियन" },
@@ -114,7 +117,14 @@ const t = {
     loginRequired: "Please log in first to create your profile.",
     workerOnly: "Profile creation is for job seekers only.",
     required: "Please fill all required fields.",
-    saveError: "Could not save profile. Please try again."
+    saveError: "Could not save profile. Please try again.",
+    chooseTitle: "How do you want to create your profile?",
+    chooseSubtitle: "Speak with AI in your language, or fill the form yourself.",
+    chooseVoice: "Speak with AI",
+    chooseVoiceHint: "Answer a few questions by voice",
+    chooseForm: "Fill form",
+    chooseFormHint: "Type your details manually",
+    voiceFilled: "We filled your form from the interview. Please review and edit if needed."
   },
   hi: {
     title: "अपनी प्रोफाइल बनाएं",
@@ -154,11 +164,16 @@ const t = {
     loginRequired: "प्रोफाइल बनाने के लिए पहले लॉगिन करें।",
     workerOnly: "प्रोफाइल बनाना नौकरी खोजने वालों के लिए है।",
     required: "कृपया सभी आवश्यक फ़ील्ड भरें।",
-    saveError: "प्रोफाइल सेव नहीं हो सकी। कृपया पुनः प्रयास करें।"
+    saveError: "प्रोफाइल सेव नहीं हो सकी। कृपया पुनः प्रयास करें।",
+    chooseTitle: "प्रोफाइल कैसे बनाना चाहते हैं?",
+    chooseSubtitle: "AI से अपनी भाषा में बोलें, या खुद फॉर्म भरें।",
+    chooseVoice: "AI से बोलें",
+    chooseVoiceHint: "कुछ सवालों के जवाब आवाज़ में दें",
+    chooseForm: "फॉर्म भरें",
+    chooseFormHint: "जानकारी खुद टाइप करें",
+    voiceFilled: "इंटरव्यू से फॉर्म भर दिया गया है। जाँचें और ज़रूरत हो तो बदलें।"
   }
 };
-
-const steps = ["form", "preview", "success"];
 
 function labelFor(options, value, lang) {
   return options.find((o) => o.en === value)?.[lang] ?? value;
@@ -167,19 +182,21 @@ function labelFor(options, value, lang) {
 function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
   const txt = t[lang];
   const { user, profile, refreshProfile, refreshCandidateProfile } = useAuth();
-  const [step, setStep] = useState("form");
+  const [step, setStep] = useState("choose");
   const [form, setForm] = useState(EMPTY_FORM);
   const [savedProfile, setSavedProfile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [voiceBanner, setVoiceBanner] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setStep("form");
+      setStep("choose");
       setForm(EMPTY_FORM);
       setSavedProfile(null);
       setSaving(false);
       setError(null);
+      setVoiceBanner(false);
     }
   }, [open]);
 
@@ -206,6 +223,24 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
         : [...prev.languages, langEn]
     }));
     setError(null);
+  };
+
+  const handleVoiceComplete = (parsed) => {
+    setForm((prev) => ({
+      ...prev,
+      fullName: parsed.fullName || "",
+      occupation: parsed.occupation || "",
+      yearsOfExperience: parsed.yearsOfExperience || "",
+      preferredWorkLocation: parsed.preferredWorkLocation || "",
+      expectedSalary: parsed.expectedSalary || "",
+      availability: parsed.availability || "",
+      skills: parsed.skills || "",
+      languages: Array.isArray(parsed.languages) ? parsed.languages : [],
+      resumeFile: null
+    }));
+    setVoiceBanner(true);
+    setError(null);
+    setStep("form");
   };
 
   const isFormValid = () =>
@@ -262,7 +297,8 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
     ? `BG-${savedProfile.id.slice(0, 6).toUpperCase()}`
     : "";
 
-  const stepIndex = steps.indexOf(step);
+  const progressSteps = ["form", "preview", "success"];
+  const progressIndex = Math.max(0, progressSteps.indexOf(step === "voice" || step === "choose" ? "form" : step));
   const stepLabels = [txt.stepForm, txt.stepReview, txt.stepDone];
 
   const selectClass =
@@ -280,6 +316,28 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
     );
   }
 
+  const headerTitle =
+    step === "choose"
+      ? txt.chooseTitle
+      : step === "voice"
+        ? txt.chooseVoice
+        : step === "form"
+          ? txt.title
+          : step === "preview"
+            ? txt.previewTitle
+            : txt.successTitle;
+
+  const headerSubtitle =
+    step === "choose"
+      ? txt.chooseSubtitle
+      : step === "voice"
+        ? txt.chooseVoiceHint
+        : step === "form"
+          ? txt.subtitle
+          : step === "preview"
+            ? txt.previewSubtitle
+            : txt.successSubtitle;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-[#E2E8F0] sm:rounded-3xl sm:p-8 sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -288,36 +346,89 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
             <User className="h-7 w-7 text-[#2563EB]" />
           </div>
           <DialogTitle className="text-base sm:text-2xl font-bold text-[#0F172A]">
-            {step === "form" && txt.title}
-            {step === "preview" && txt.previewTitle}
-            {step === "success" && txt.successTitle}
+            {headerTitle}
           </DialogTitle>
           <DialogDescription className="text-[#64748B]">
-            {step === "form" && txt.subtitle}
-            {step === "preview" && txt.previewSubtitle}
-            {step === "success" && txt.successSubtitle}
+            {headerSubtitle}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center justify-center gap-1 sm:gap-2">
-          {stepLabels.map((label, i) => (
-            <div key={label} className="flex items-center gap-1 sm:gap-2">
-              <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-                <div
-                  className={`flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-full text-[10px] sm:text-xs font-bold transition-colors ${i <= stepIndex ? "bg-[#2563EB] text-white" : "bg-[#E2E8F0] text-[#94A3B8]"}`}
-                >
-                  {i < stepIndex ? "✓" : i + 1}
+        {step !== "choose" && step !== "voice" && (
+          <div className="flex items-center justify-center gap-1 sm:gap-2">
+            {stepLabels.map((label, i) => (
+              <div key={label} className="flex items-center gap-1 sm:gap-2">
+                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                  <div
+                    className={`flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-full text-[10px] sm:text-xs font-bold transition-colors ${i <= progressIndex ? "bg-[#2563EB] text-white" : "bg-[#E2E8F0] text-[#94A3B8]"}`}
+                  >
+                    {i < progressIndex ? "✓" : i + 1}
+                  </div>
+                  <span className="hidden sm:block text-[10px] font-semibold text-[#64748B]">{label}</span>
                 </div>
-                <span className="hidden sm:block text-[10px] font-semibold text-[#64748B]">{label}</span>
+                {i < stepLabels.length - 1 && (
+                  <div className={`h-0.5 w-3 sm:w-8 shrink-0 transition-colors ${i < progressIndex ? "bg-[#2563EB]" : "bg-[#E2E8F0]"}`} />
+                )}
               </div>
-              {i < stepLabels.length - 1 && (
-                <div className={`h-0.5 w-3 sm:w-8 shrink-0 transition-colors ${i < stepIndex ? "bg-[#2563EB]" : "bg-[#E2E8F0]"}`} />
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
+          {step === "choose" && (
+            <motion.div
+              key="choose"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              className="space-y-3"
+            >
+              <button
+                type="button"
+                onClick={() => setStep("voice")}
+                className="flex w-full items-start gap-3 rounded-2xl border-2 border-[#F97316] bg-orange-50 p-4 text-left hover:bg-orange-100 transition-colors"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F97316] text-white">
+                  <Mic className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-bold text-[#0F172A]">{txt.chooseVoice}</p>
+                  <p className="mt-0.5 text-xs sm:text-sm text-[#64748B]">{txt.chooseVoiceHint}</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setVoiceBanner(false);
+                  setStep("form");
+                }}
+                className="flex w-full items-start gap-3 rounded-2xl border-2 border-[#E2E8F0] bg-white p-4 text-left hover:border-[#2563EB] transition-colors"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB]">
+                  <Keyboard className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-bold text-[#0F172A]">{txt.chooseForm}</p>
+                  <p className="mt-0.5 text-xs sm:text-sm text-[#64748B]">{txt.chooseFormHint}</p>
+                </div>
+              </button>
+            </motion.div>
+          )}
+
+          {step === "voice" && (
+            <motion.div
+              key="voice"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+            >
+              <VoiceInterviewPanel
+                siteLang={lang}
+                onComplete={handleVoiceComplete}
+                onCancel={() => setStep("choose")}
+              />
+            </motion.div>
+          )}
+
           {step === "form" && (
             <motion.div
               key="form"
@@ -326,6 +437,12 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
               exit={{ opacity: 0, y: -12 }}
               className="space-y-3 sm:space-y-4"
             >
+              {voiceBanner && (
+                <p className="rounded-xl bg-green-50 border border-green-100 px-3 py-2 text-xs sm:text-sm font-semibold text-green-700">
+                  {txt.voiceFilled}
+                </p>
+              )}
+
               <div className="space-y-1.5">
                 <Label htmlFor="fullName" className="text-xs sm:text-sm font-semibold text-[#0F172A]">
                   {txt.fullName} *

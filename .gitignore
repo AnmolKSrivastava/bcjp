@@ -9,9 +9,13 @@ dist/
 .env.local
 .env.production
 .env.*.local
+functions/.env
+functions/.env.*
+!functions/.env.example
 
 # Firebase
 .firebase/
+functions/node_modules/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
