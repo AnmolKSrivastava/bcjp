@@ -21,7 +21,7 @@ import { useAuth } from "@/features/auth";
 const t = {
   en: {
     findJobs: "Find Jobs",
-    categories: "Categories",
+    categories: "Industries",
     forEmployers: "For Employers",
     successStories: "Success Stories",
     aboutUs: "About Us",
@@ -39,7 +39,7 @@ const t = {
   },
   hi: {
     findJobs: "नौकरी खोजें",
-    categories: "श्रेणियाँ",
+    categories: "उद्योग",
     forEmployers: "नियोक्ताओं के लिए",
     successStories: "सफलता की कहानियाँ",
     aboutUs: "हमारे बारे में",

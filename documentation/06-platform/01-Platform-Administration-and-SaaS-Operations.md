@@ -50,6 +50,10 @@ Organizations
 
 ↓
 
+Industry Taxonomy (Industries, Departments, Job Roles)
+
+↓
+
 Plans
 
 ↓
@@ -64,6 +68,8 @@ Global Settings
 
 Operational Metrics
 ```
+
+Platform admins manage the seven canonical industries (rarely changed), taxonomy departments, and job roles. They do not manage arbitrary job categories.
 
 Platform admins never become organization employees.
 
@@ -97,7 +103,7 @@ Example fields:
 
 - Organization Name
 - Organization ID
-- Industry
+- industryId
 - Country
 - Status
 - Subscription
@@ -105,6 +111,20 @@ Example fields:
 - Last Activity
 
 This registry becomes the SaaS customer directory.
+
+---
+
+# Taxonomy Management
+
+Platform administrators manage the Industry → Department → Role hierarchy:
+
+| Entity | Change Frequency | Admin Action |
+|--------|-----------------|--------------|
+| Industries | Rarely (seven fixed: construction, manufacturing, showroom, retail, hospital, elderly-care, restaurant) | View, enable/disable |
+| Departments | Occasionally | Add, edit, deactivate within an industry |
+| Job Roles | Regularly | Add, edit, deactivate within a department |
+
+Administrators do **not** manage arbitrary job categories or unlimited industry lists. Organizations select from this taxonomy when posting jobs and assigning employees.
 
 ---
 
@@ -635,6 +655,7 @@ Design for scalability from the beginning, even if only a few organizations exis
 # Key Takeaways
 
 - Platform Administration manages the SaaS product, not customer HR operations.
+- Platform administrators manage the Industry → Department → Role taxonomy; organizations consume it.
 - Tenant isolation remains a core architectural principle.
 - Subscription plans and feature flags enable flexible commercialization.
 - Usage tracking prepares the platform for future billing and scaling.

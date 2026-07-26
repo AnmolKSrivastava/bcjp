@@ -12,33 +12,33 @@ const stories = [
       en: "I just spoke for 5 minutes and Bharat Gig created my resume. Got hired in just 5 days!",
       hi: "मैंने सिर्फ 5 मिनट बोला और Bharat Gig ने मेरा रेज़्यूमे बना दिया। 5 दिन में नौकरी मिली!"
     },
-    img: homeImages.electrician,
+    img: homeImages.constructionWorker,
     color: "#FEF3C7"
   },
   {
     name: "Sunita Devi",
-    role: { en: "Housekeeping", hi: "हाउसकीपिंग" },
+    role: { en: "Caregiver", hi: "केयरगिवर" },
     city: { en: "Delhi", hi: "दिल्ली" },
     days: 8,
     salary: "₹20,000/mo",
     quote: {
-      en: "I didn't know how to write a resume. Now I have a job at a hotel, thanks to Bharat Gig!",
-      hi: "मुझे रेज़्यूमे लिखना नहीं आता था। अब होटल में नौकरी मिली, Bharat Gig का शुक्रिया!"
+      en: "I didn't know how to write a resume. Now I have a job in elderly care, thanks to Bharat Gig!",
+      hi: "मुझे रेज़्यूमे लिखना नहीं आता था। अब बुज़ुर्ग देखभाल में नौकरी मिली, Bharat Gig का शुक्रिया!"
     },
-    img: homeImages.housekeeping,
+    img: homeImages.elderlyCare,
     color: "#DBEAFE"
   },
   {
     name: "Imran Khan",
-    role: { en: "Driver", hi: "ड्राइवर" },
+    role: { en: "Chef", hi: "शेफ" },
     city: { en: "Lucknow", hi: "लखनऊ" },
     days: 6,
     salary: "₹30,000/mo",
     quote: {
-      en: "The voice resume was a game changer. Companies called me directly. Hired in 6 days!",
-      hi: "वॉयस रेज़्यूमे ने सब बदल दिया। कंपनियाँ सीधे कॉल करने लगीं। 6 दिन में नौकरी!"
+      en: "The voice resume was a game changer. Restaurants called me directly. Hired in 6 days!",
+      hi: "वॉयस रेज़्यूमे ने सब बदल दिया। रेस्तरां सीधे कॉल करने लगे। 6 दिन में नौकरी!"
     },
-    img: homeImages.driver,
+    img: homeImages.restaurantStaff,
     color: "#D1FAE5"
   }
 ];

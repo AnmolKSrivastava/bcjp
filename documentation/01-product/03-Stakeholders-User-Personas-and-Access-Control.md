@@ -47,7 +47,7 @@ The primary stakeholders are:
 | Operations Executive | Daily operational management |
 | Finance Team | Financial reporting |
 | Compliance Officer | Documentation & audits |
-| Care Coordinator | Care economy operations |
+| Care Coordinator | Hospital Staff and Elderly Care operations |
 | System Administrator | Platform administration |
 | Super Administrator | Complete platform control |
 
@@ -85,20 +85,17 @@ This significantly reduces maintenance complexity.
 
 Workers are the primary users of the platform.
 
-They represent:
+They represent frontline workers within Bharat Gig's seven industries, for example:
 
-- Factory workers
-- Delivery partners
-- Warehouse staff
-- Retail employees
-- Electricians
-- Plumbers
-- Security guards
-- Drivers
-- Domestic workers
-- Caregivers
-- Nurses
-- Helpers
+- Construction electricians, plumbers, welders, and helpers
+- Manufacturing machine operators, assembly, packaging, and factory helpers
+- Showroom floor executives, cashiers, and sales staff
+- Retail shop assistants, counter executives, and inventory staff
+- Hospital nurses, ward boys, lab staff, and housekeeping
+- Elderly-care caregivers, home nurses, and companions
+- Restaurant chefs, cooks, waiters, and kitchen helpers
+
+Workers select preferred **Industry → Department → Role** from master data (`industries`, `departments`, `jobRoles`). Free-text industries are not supported.
 
 ---
 
@@ -189,14 +186,17 @@ Workers cannot:
 
 Employers create employment opportunities and manage workers.
 
-Examples:
+Examples (within the seven industries only):
 
-- Manufacturing companies
-- Hospitals
-- Warehouses
-- Retail chains
-- Facility management companies
 - Construction firms
+- Manufacturing companies
+- Showrooms and malls
+- Retail shops
+- Hospitals
+- Elderly-care homes and agencies
+- Restaurants
+
+Each employer organization is tied to a supported industry from master data. Jobs they post must use **Industry → Department → Role** (no free-text industry).
 
 ---
 
@@ -460,19 +460,19 @@ Audit preparation
 
 Compliance reports
 
-This role becomes especially important for the Care Economy module.
+This role becomes especially important for Hospital Staff and Elderly Care hiring, where police, medical, and certification checks are often required.
 
 ---
 
 # 12. Care Coordinator
 
-Specific to healthcare services.
+Specific to the **Hospital Staff** and **Elderly Care** industries (not a separate Care Economy product module).
 
 Responsibilities
 
-Assign caregivers
+Assign caregivers and hospital support staff
 
-Manage patient relationships
+Manage patient / family relationships
 
 Track medical certifications
 
@@ -480,9 +480,9 @@ Respond to SOS alerts
 
 Coordinate emergencies
 
-Maintain caregiver availability
+Maintain caregiver and ward-staff availability
 
-This role does not exist in a traditional workforce management system.
+This role supports operations within those two industries inside the same platform.
 
 ---
 
@@ -687,7 +687,7 @@ organizations/
 
         name
 
-        industry
+        industryId          // one of the seven: construction, manufacturing, showroom, retail, hospital, elderly-care, restaurant
 
         status
 
@@ -695,6 +695,8 @@ organizations/
 
         settings
 ```
+
+Industry must reference the `industries` master collection. Departments and roles used in jobs reference `departments` and `jobRoles`.
 
 ---
 
@@ -766,10 +768,11 @@ This approach keeps the system maintainable as roles evolve.
 
 # Key Takeaways
 
-- The platform supports multiple stakeholder types beyond Workers and Employers.
+- The platform supports multiple stakeholder types beyond Workers and Employers, within the seven industries.
+- Workers and employers use Industry → Department → Role from master data; Hospital Staff and Elderly Care are industries, not a separate Care Economy module.
 - Roles determine both UI and backend permissions.
 - A single authentication system with role-based authorization keeps the architecture simple.
 - Firestore Security Rules should enforce permissions independently of the frontend.
-- The role model is designed to scale as new business domains and user types are introduced.
+- The role model is designed to scale as new user types are introduced within the supported industries.
 
 ---

@@ -14,6 +14,13 @@ import {
   unsaveJob
 } from "@/features/profile/services/applicationService";
 import { USER_ROLES } from "@/utils/constants";
+import {
+  displayIndustryLabel,
+  displayRoleLabel,
+  getIndustry,
+  labelOf,
+  taxonomySearchText
+} from "@/features/taxonomy";
 
 const copy = {
   en: {
@@ -93,19 +100,6 @@ function normalizeSearchQuery(raw) {
     .join(" ");
 }
 
-const TITLE_LABELS = {
-  Electrician: { en: "Electrician", hi: "इलेक्ट्रिशियन" },
-  Plumber: { en: "Plumber", hi: "प्लंबर" },
-  Driver: { en: "Driver", hi: "ड्राइवर" },
-  "Delivery Executive": { en: "Delivery Executive", hi: "डिलीवरी एग्जीक्यूटिव" },
-  "Security Guard": { en: "Security Guard", hi: "सिक्योरिटी गार्ड" },
-  "Factory Worker": { en: "Factory Worker", hi: "फैक्ट्री वर्कर" },
-  Welder: { en: "Welder", hi: "वेल्डर" },
-  Housekeeping: { en: "Housekeeping", hi: "हाउसकीपिंग" },
-  Cook: { en: "Cook", hi: "रसोइया" },
-  Other: { en: "Other", hi: "अन्य" }
-};
-
 const TYPE_LABELS = {
   "Full Time": { en: "Full Time", hi: "पूर्णकालिक" },
   "Part Time": { en: "Part Time", hi: "अंशकालिक" },
@@ -113,17 +107,28 @@ const TYPE_LABELS = {
   "Daily Wage": { en: "Daily Wage", hi: "दैनिक मजदूरी" }
 };
 
-const JOB_VISUALS = {
-  Electrician: { icon: "⚡", color: "#FEF3C7", iconBg: "#F97316" },
-  Plumber: { icon: "🔧", color: "#DBEAFE", iconBg: "#2563EB" },
-  Driver: { icon: "🚗", color: "#D1FAE5", iconBg: "#22C55E" },
-  "Delivery Executive": { icon: "🚴", color: "#DBEAFE", iconBg: "#2563EB" },
-  "Security Guard": { icon: "🛡️", color: "#EDE9FE", iconBg: "#7C3AED" },
-  "Factory Worker": { icon: "🏭", color: "#FEF3C7", iconBg: "#F97316" },
-  Welder: { icon: "🔩", color: "#EDE9FE", iconBg: "#7C3AED" },
-  Housekeeping: { icon: "🧹", color: "#D1FAE5", iconBg: "#22C55E" },
-  Cook: { icon: "👨‍🍳", color: "#FFEDD5", iconBg: "#F97316" },
-  Other: { icon: "💼", color: "#F1F5F9", iconBg: "#64748B" }
+const INDUSTRY_VISUALS = {
+  construction: { icon: "🏗️", color: "#FEF3C7" },
+  manufacturing: { icon: "🏭", color: "#FEE2E2" },
+  showroom: { icon: "🏬", color: "#DBEAFE" },
+  retail: { icon: "🛒", color: "#FCE7F3" },
+  hospital: { icon: "🏥", color: "#D1FAE5" },
+  "elderly-care": { icon: "💙", color: "#EDE9FE" },
+  restaurant: { icon: "🍽️", color: "#FFEDD5" },
+  legacy: { icon: "💼", color: "#F1F5F9" }
+};
+
+const LEGACY_TITLE_VISUALS = {
+  Electrician: INDUSTRY_VISUALS.construction,
+  Plumber: INDUSTRY_VISUALS.construction,
+  Welder: INDUSTRY_VISUALS.construction,
+  "Factory Worker": INDUSTRY_VISUALS.manufacturing,
+  Cook: INDUSTRY_VISUALS.restaurant,
+  Housekeeping: INDUSTRY_VISUALS.hospital,
+  "Delivery Executive": INDUSTRY_VISUALS.retail,
+  Driver: INDUSTRY_VISUALS.legacy,
+  "Security Guard": INDUSTRY_VISUALS.legacy,
+  Other: INDUSTRY_VISUALS.legacy
 };
 
 function formatSalary(job, lang) {
@@ -136,19 +141,28 @@ function formatSalary(job, lang) {
   return "—";
 }
 
-function jobTitleLabel(title, lang) {
-  return TITLE_LABELS[title]?.[lang] ?? title;
-}
-
 function jobTypeLabel(type, lang) {
   return TYPE_LABELS[type]?.[lang] ?? type;
 }
 
-function jobVisual(title) {
-  return JOB_VISUALS[title] ?? JOB_VISUALS.Other;
+function jobVisual(job) {
+  if (job?.industryId && INDUSTRY_VISUALS[job.industryId]) {
+    return INDUSTRY_VISUALS[job.industryId];
+  }
+  return LEGACY_TITLE_VISUALS[job?.title] ?? INDUSTRY_VISUALS.legacy;
 }
 
-function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginClick, onCreateProfileClick }) {
+function FeaturedJobs({
+  lang,
+  browseMode = null,
+  onBrowseModeHandled,
+  industryFilter = null,
+  departmentFilter = null,
+  roleFilter = null,
+  onClearIndustryFilter,
+  onLoginClick,
+  onCreateProfileClick
+}) {
   const txt = copy[lang];
   const { user, profile, candidateProfile } = useAuth();
   const searchInputRef = useRef(null);
@@ -339,22 +353,29 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
   };
 
   const normalizedQuery = normalizeSearchQuery(query);
-  const filteredJobs = normalizedQuery
-    ? jobs.filter((job) => {
-        const haystack = [
-          job.title,
-          jobTitleLabel(job.title, "en"),
-          jobTitleLabel(job.title, "hi"),
-          job.organizationName,
-          job.location,
-          job.employmentType,
-          ...(job.skills ?? [])
-        ]
-          .join(" ")
-          .toLowerCase();
-        return normalizedQuery.split(/\s+/).every((term) => haystack.includes(term));
-      })
-    : jobs;
+  const filteredJobs = jobs.filter((job) => {
+    if (industryFilter) {
+      if (!job.industryId || job.industryId !== industryFilter) return false;
+    }
+    if (departmentFilter) {
+      if (!job.departmentId || job.departmentId !== departmentFilter) return false;
+    }
+    if (roleFilter) {
+      if (!job.roleId || job.roleId !== roleFilter) return false;
+    }
+    if (!normalizedQuery) return true;
+    const haystack = [
+      taxonomySearchText(job, lang),
+      taxonomySearchText(job, "en"),
+      job.organizationName,
+      job.location,
+      job.employmentType,
+      ...(job.skills ?? [])
+    ]
+      .join(" ")
+      .toLowerCase();
+    return normalizedQuery.split(/\s+/).every((term) => haystack.includes(term));
+  });
 
   return (
     <section id="jobs" className="bg-[#F8FAFC] py-20 px-4 scroll-mt-24">
@@ -366,6 +387,38 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
             </span>
             <h2 className="text-4xl font-extrabold text-[#0F172A]">{txt.title}</h2>
             <p className="text-[#64748B] mt-2">{txt.subtitle}</p>
+            {(industryFilter || departmentFilter || roleFilter) && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {industryFilter && (
+                  <span className="rounded-full bg-orange-50 px-3 py-1 text-sm font-semibold text-[#F97316] border border-orange-100">
+                    {labelOf(getIndustry(industryFilter), lang)}
+                  </span>
+                )}
+                {departmentFilter && (
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-[#2563EB] border border-blue-100">
+                    {getIndustry(industryFilter)?.departments?.find((d) => d.id === departmentFilter)?.[lang]
+                      || getIndustry(industryFilter)?.departments?.find((d) => d.id === departmentFilter)?.en
+                      || departmentFilter}
+                  </span>
+                )}
+                {roleFilter && (
+                  <span className="rounded-full bg-green-50 px-3 py-1 text-sm font-semibold text-green-700 border border-green-100">
+                    {jobs.find((j) => j.roleId === roleFilter)?.roleName
+                      || getIndustry(industryFilter)
+                        ?.departments?.flatMap((d) => d.roles)
+                        ?.find((r) => r.id === roleFilter)?.[lang]
+                      || roleFilter}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={onClearIndustryFilter}
+                  className="text-sm font-semibold text-[#2563EB] hover:underline"
+                >
+                  {lang === "hi" ? "फ़िल्टर हटाएँ" : "Clear filter"}
+                </button>
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -443,7 +496,7 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {filteredJobs.map((job, i) => {
-              const visual = jobVisual(job.title);
+              const visual = jobVisual(job);
               const isApplied = appliedJobIds.has(job.id);
               const isSaved = Boolean(savedByJobId[job.id]);
               const applying = actionJobId === job.id;
@@ -471,9 +524,14 @@ function FeaturedJobs({ lang, browseMode = null, onBrowseModeHandled, onLoginCli
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-lg font-bold text-[#0F172A] group-hover:text-[#2563EB] transition-colors truncate">
-                          {jobTitleLabel(job.title, lang)}
+                          {displayRoleLabel(job, lang)}
                         </h3>
                         <p className="text-sm text-[#64748B] truncate">{job.organizationName}</p>
+                        {displayIndustryLabel(job, lang) && (
+                          <p className="text-xs text-[#94A3B8] truncate">
+                            {displayIndustryLabel(job, lang)}
+                          </p>
+                        )}
                       </div>
                     </Link>
                     <span className="shrink-0 text-xs font-bold px-3 py-1 rounded-full border bg-green-50 text-green-600 border-green-100">

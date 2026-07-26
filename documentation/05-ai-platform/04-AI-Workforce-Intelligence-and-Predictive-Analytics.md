@@ -79,7 +79,7 @@ Analyze:
 Example:
 
 ```
-Engineering Department
+Kitchen Department (restaurant)
 
 Employee Count
 

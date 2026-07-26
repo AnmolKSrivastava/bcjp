@@ -341,7 +341,7 @@ Attendance Accepted
 Example
 
 ```
-Warehouse
+Manufacturing plant warehouse (site under manufacturing)
 
 Radius
 

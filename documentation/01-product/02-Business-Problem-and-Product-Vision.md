@@ -17,20 +17,19 @@ This chapter explains those problems from the perspective of workers, employers,
 
 India has one of the largest labour forces in the world.
 
-A significant percentage of workers are employed in industries such as:
+Bharat Gig focuses on seven employment industries where hiring is still highly informal:
 
-- Manufacturing
-- Construction
-- Warehousing
-- Logistics
-- Retail
-- Hospitality
-- Healthcare
-- Domestic Services
-- Security Services
-- Facility Management
+1. Construction Workers
+2. Manufacturing Company Workers
+3. Showrooms & Mall Executives
+4. Retail Shop Workers
+5. Hospital Staff
+6. Elderly Care
+7. Restaurant Staff
 
-Unlike highly skilled professionals, these workers rarely use platforms like LinkedIn.
+The platform does **not** aim to cover every blue-collar or grey-collar occupation in India. Unsupported verticals (for example logistics-only fleets, private security agencies, or domestic-only staffing as standalone industries) are out of product scope.
+
+Unlike highly skilled professionals, workers in these industries rarely use platforms like LinkedIn.
 
 Most employment still happens through:
 
@@ -112,7 +111,7 @@ A digital employment record improves long-term employability.
 
 # 3. Problems Faced by Employers
 
-Hiring blue-collar workers presents challenges very different from hiring office employees.
+Hiring frontline workers in these seven industries presents challenges very different from hiring office employees.
 
 ---
 
@@ -178,15 +177,17 @@ Manual payroll calculations increase administrative workload and introduce error
 
 ## 3.5 Multi-site Operations
 
-Many organizations operate across:
+Many organizations operate across multiple sites within a supported industry — for example:
 
-- Factories
-- Warehouses
-- Retail stores
-- Hospitals
 - Construction sites
+- Manufacturing plants and factory warehouses
+- Showrooms and mall floors
+- Retail shops
+- Hospitals
+- Elderly-care homes and patient residences
+- Restaurants
 
-Managers need a centralized system to monitor workers across all locations.
+Managers need a centralized system to monitor workers across those locations.
 
 ---
 
@@ -260,7 +261,7 @@ Identity Verification
 
 ↓
 
-Skill Profile
+Industry → Department → Role Profile
 
 ↓
 
@@ -268,7 +269,7 @@ Resume Creation
 
 ↓
 
-Job Discovery
+Job Discovery (filtered by taxonomy)
 
 ↓
 
@@ -426,17 +427,17 @@ The first production release should focus on solving the most critical problems.
 The MVP should include:
 
 - User authentication
-- Worker profiles
-- Employer profiles
-- Job posting
-- Job applications
-- Hiring workflow
-- Attendance
+- Worker profiles with preferred Industry → Department → Role
+- Employer profiles tied to a supported industry
+- Job posting using Industry → Department → Role dropdowns (no free-text industry)
+- Job applications and hiring workflow
+- Search/filters by Industry, Department, Role, city, experience, salary, shift
+- Voice/AI resume builder guided by the same taxonomy
 - Notifications
-- Basic payroll
-- Admin dashboard
+- Admin management of industries, departments, and roles
+- Basic attendance / payroll only where already in scope for the current phase
 
-Advanced AI, analytics, and predictive features should be introduced after validating the core platform.
+Advanced predictive analytics should be introduced after validating the core marketplace within the seven industries.
 
 ---
 
@@ -479,10 +480,11 @@ If the answer to these questions is "yes," the implementation is likely aligned 
 
 # Key Takeaways
 
-- This is not merely a recruitment platform.
-- The platform digitizes the complete employment lifecycle.
-- Every feature should solve a measurable business problem.
-- Simplicity and accessibility are more important than adding excessive features.
-- Technology choices should always support the business vision rather than drive it.
+- Bharat Gig is a specialized seven-industry platform, not a catch-all job board.
+- Industry → Department → Role is the single taxonomy for jobs, profiles, search, and AI.
+- This is not merely a recruitment platform; it digitizes the employment lifecycle within those industries.
+- Every feature should solve a measurable business problem for in-scope verticals.
+- Simplicity and accessibility matter more than expanding into unsupported industries.
+- Technology choices should support the specialized product vision rather than drive unlimited category growth.
 
 ---

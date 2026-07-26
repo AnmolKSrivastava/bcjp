@@ -84,6 +84,7 @@ This single principle eliminates hundreds of synchronization bugs.
 | User Identity | Authentication | Entire Platform |
 | Worker Details | Profile | Jobs, Attendance, Payroll |
 | Employer Details | Organization | Jobs, Reports |
+| Platform Taxonomy (Industries, Departments, Job Roles) | Platform Administration | Jobs, Profiles, Search, AI, Analytics |
 | Jobs | Job Marketplace | Hiring |
 | Applications | Hiring | Notifications |
 | Attendance | Attendance | Payroll |
@@ -185,6 +186,12 @@ users/
 
 organizations/
 
+industries/
+
+departments/
+
+jobRoles/
+
 jobs/
 
 applications/
@@ -203,6 +210,8 @@ settings/
 
 audit_logs/
 ```
+
+Platform taxonomy collections (`industries/`, taxonomy `departments/`, `jobRoles/`) are shared reference data — not tenant-owned. They contain the seven canonical industries and their Industry → Department → Role hierarchy.
 
 Avoid creating dozens of unrelated root collections.
 
@@ -323,7 +332,7 @@ organizations/
 
         type
 
-        industry
+        industryId
 
         locations
 
@@ -331,6 +340,8 @@ organizations/
 
         createdAt
 ```
+
+Organization `industryId` references the platform taxonomy. Organizations do not define custom industry categories.
 
 Organization data belongs only here.
 
@@ -345,9 +356,23 @@ jobs/
 
         title
 
+        industryId
+
+        industryName
+
+        departmentId
+
+        departmentName
+
+        roleId
+
+        roleName
+
         location
 
         salary
+
+        experience
 
         employerId
 
@@ -355,6 +380,8 @@ jobs/
 
         createdAt
 ```
+
+Every job must belong to the platform taxonomy hierarchy. Free-text industry or role labels are not permitted.
 
 Applications should NOT live inside job documents.
 
@@ -897,6 +924,7 @@ If these questions are answered correctly, the architecture will remain healthy 
 # Key Takeaways
 
 - Every piece of business data has a single owner.
+- Platform taxonomy (industries, departments, jobRoles) is shared reference data owned by Platform Administration.
 - Firestore collections should represent business domains rather than UI pages.
 - References are preferred over duplication.
 - Cloud Functions own business logic.

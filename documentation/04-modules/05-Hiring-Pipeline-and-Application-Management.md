@@ -37,7 +37,9 @@ Organizations need to:
 - Hire workers
 - Reject unsuitable applicants
 
-The Hiring Pipeline standardizes this process while remaining flexible for different industries.
+The Hiring Pipeline standardizes this process across Bharat Gig's seven core industries: construction, manufacturing, showroom, retail, hospital, elderly-care, and restaurant.
+
+Every job in the pipeline references the platform taxonomy (Industry → Department → Role) via IDs.
 
 ---
 
@@ -200,6 +202,12 @@ applications/
         workerId
 
         organizationId
+
+        industryId
+
+        departmentId
+
+        roleId
 
         currentStage
 

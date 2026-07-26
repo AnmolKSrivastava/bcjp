@@ -24,22 +24,11 @@ import { Textarea } from "@/lib/ui/textarea";
 import { useAuth } from "@/features/auth";
 import { saveOrganizationProfile } from "../services/organizationService";
 
-const INDUSTRIES = [
-  { en: "Manufacturing", hi: "विनिर्माण" },
-  { en: "Construction", hi: "निर्माण" },
-  { en: "Logistics & Delivery", hi: "लॉजिस्टिक्स और डिलीवरी" },
-  { en: "Retail", hi: "खुदरा" },
-  { en: "Healthcare", hi: "स्वास्थ्य सेवा" },
-  { en: "Hospitality", hi: "होटल और रेस्तरां" },
-  { en: "Security Services", hi: "सुरक्षा सेवाएँ" },
-  { en: "Facility Management", hi: "फैसिलिटी प्रबंधन" },
-  { en: "Staffing Agency", hi: "स्टाफिंग एजेंसी" },
-  { en: "Other", hi: "अन्य" }
-];
+import { getIndustries, getIndustry, labelOf } from "@/features/taxonomy";
 
 const EMPTY_FORM = {
   companyName: "",
-  industry: "",
+  industryId: "",
   city: "",
   contactPersonName: "",
   description: ""
@@ -150,9 +139,11 @@ function CreateCompanyModal({ open, onOpenChange, lang, onComplete }) {
     setError(null);
   };
 
+  const industries = getIndustries();
+
   const isFormValid = () =>
     form.companyName.trim() &&
-    form.industry &&
+    form.industryId &&
     form.city.trim() &&
     form.contactPersonName.trim();
 
@@ -272,13 +263,15 @@ function CreateCompanyModal({ open, onOpenChange, lang, onComplete }) {
                 </Label>
                 <select
                   id="industry"
-                  value={form.industry}
-                  onChange={(e) => updateField("industry", e.target.value)}
+                  value={form.industryId}
+                  onChange={(e) => updateField("industryId", e.target.value)}
                   className={selectClass}
                 >
                   <option value="">{txt.industryPlaceholder}</option>
-                  {INDUSTRIES.map((o) => (
-                    <option key={o.en} value={o.en}>{o[lang]}</option>
+                  {industries.map((industry) => (
+                    <option key={industry.id} value={industry.id}>
+                      {labelOf(industry, lang)}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -352,7 +345,7 @@ function CreateCompanyModal({ open, onOpenChange, lang, onComplete }) {
                   <div className="min-w-0">
                     <h3 className="text-sm sm:text-xl font-bold text-[#0F172A] break-words">{form.companyName}</h3>
                     <span className="mt-1 inline-block rounded-full bg-orange-100 px-2 py-0.5 text-xs sm:text-sm font-semibold text-[#F97316]">
-                      {labelFor(INDUSTRIES, form.industry, lang)}
+                      {labelOf(getIndustry(form.industryId), lang)}
                     </span>
                   </div>
                 </div>
@@ -361,7 +354,7 @@ function CreateCompanyModal({ open, onOpenChange, lang, onComplete }) {
                   {[
                     { icon: MapPin, label: txt.city, value: form.city },
                     { icon: User, label: txt.contactPerson, value: form.contactPersonName },
-                    { icon: Briefcase, label: txt.industry, value: labelFor(INDUSTRIES, form.industry, lang) }
+                    { icon: Briefcase, label: txt.industry, value: labelOf(getIndustry(form.industryId), lang) }
                   ].map(({ icon: Icon, label, value }) => (
                     <div key={label} className="rounded-lg sm:rounded-xl bg-white p-2 sm:p-3 min-w-0">
                       <div className="mb-0.5 flex items-center gap-1 text-[10px] sm:text-xs text-[#64748B]">

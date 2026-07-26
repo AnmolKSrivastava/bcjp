@@ -32,11 +32,11 @@ Who is available tomorrow?
 
 Do we have enough nurses for the night shift?
 
-Which security guards are certified for this location?
+Which kitchen staff are certified for this location?
 
 Who has exceeded overtime limits?
 
-Which warehouse is understaffed?
+Which manufacturing floor is understaffed?
 
 Can we automatically assign replacement workers?
 
@@ -230,7 +230,7 @@ Organizations define staffing needs.
 
 Example
 
-Warehouse
+Manufacturing Floor
 
 ↓
 
@@ -246,7 +246,7 @@ Morning Shift
 
 ↓
 
-1 Forklift Operator
+1 Machine Operator
 
 The planner compares demand against available employees.
 
@@ -473,7 +473,7 @@ Each location may define minimum staffing.
 
 Example
 
-Warehouse
+Restaurant Kitchen
 
 Morning
 

@@ -20,14 +20,26 @@ This guide should be considered the official reading order for all developers an
 
 The project is currently **NOT** building the complete HRMS.
 
-The immediate objective is to launch a modern **Job Marketplace Platform** that allows:
+The immediate objective is to launch a modern **Job Marketplace Platform** for Bharat Gig's **seven industries only**:
+
+1. Construction Workers (`construction`)
+2. Manufacturing Company Workers (`manufacturing`)
+3. Showrooms & Mall Executives (`showroom`)
+4. Retail Shop Workers (`retail`)
+5. Hospital Staff (`hospital`)
+6. Elderly Care (`elderly-care`)
+7. Restaurant Staff (`restaurant`)
+
+Phase 1 allows:
 
 - Job Seekers to register
 - Employers to register
-- Employers to post jobs
-- Candidates to search jobs
+- Employers to post jobs using **Industry → Department → Role**
+- Candidates to search jobs within the seven industries
 - Candidates to apply for jobs
 - Employers to manage applications
+
+Hospital Staff and Elderly Care are industries in this taxonomy — not a separate Care Economy product module. There is no free-text industry; master collections are `industries`, `departments`, and `jobRoles`.
 
 The application will be:
 
@@ -52,13 +64,13 @@ The coding agent should focus ONLY on implementing:
 
 - Registration
 - Login
-- Profile
+- Profile (including preferred Industry → Department → Role)
 - Resume Upload
 - Skills
 - Education
 - Experience
 - Dashboard
-- Search Jobs
+- Search Jobs (filters by Industry, Department, Role within the seven industries)
 - Save Jobs
 - Apply to Jobs
 - Track Applications
@@ -69,8 +81,8 @@ The coding agent should focus ONLY on implementing:
 
 - Registration
 - Login
-- Company Profile
-- Post Jobs
+- Company Profile (tied to a supported industry)
+- Post Jobs (Industry → Department → Role from master data; no free-text industry)
 - Edit Jobs
 - Close Jobs
 - View Applicants
@@ -83,6 +95,7 @@ The coding agent should focus ONLY on implementing:
 - Authentication
 - Authorization
 - Organization Management
+- Industry taxonomy master data (`industries`, `departments`, `jobRoles`)
 - Job Management
 - Application Management
 - Responsive UI
@@ -101,7 +114,7 @@ The documentation should be consumed in the following order.
 
 ---
 
-# Step 1 — Product Understanding
+# Step 1 — Product Understanding & Industry Taxonomy
 
 Read these documents completely before writing any code.
 
@@ -111,6 +124,8 @@ Read these documents completely before writing any code.
 ├── 02-Business-Problem-and-Product-Vision.md
 ├── 03-Stakeholders-User-Personas-and-Access-Control.md
 └── 04-Complete-Business-Workflow.md
+
+01-Industry-Taxonomy-Migration-v2.md
 ```
 
 Purpose:
@@ -122,12 +137,15 @@ Understand
 - Product vision
 - Recruitment workflow
 - Platform objectives
+- The seven-industry scope and Industry → Department → Role hierarchy
 
-These documents explain **why** the platform exists.
+These documents explain **why** the platform exists and which industries are in scope for Phase 1.
+
+The taxonomy migration guide is Phase 1 critical — treat it as canonical for industries, departments, roles, and master collections.
 
 ---
 
-# Step 2 — System Design
+# Step 2 — System Design & Master Data
 
 Read completely.
 
@@ -136,6 +154,7 @@ Read completely.
 ├── 01-System-Modules-and-Platform-Architecture.md
 ├── 02-Data-Ownership-and-Firestore-Architecture.md
 ├── 03-Frontend-Architecture-and-Design-System.md
+├── 04-Master-Data-and-Reference-Data-Management.md
 ├── 06-Authorization-Roles-and-Permission-Architecture.md
 └── 07-UI-UX-Design-System-and-Design-Language.md
 ```
@@ -146,21 +165,22 @@ Understand
 
 - Overall architecture
 - Firestore structure
+- Master data for industries, departments, and job roles
 - Frontend architecture
 - Permission system
 - UI consistency
 
+Master data is required in Phase 1 because every profile, job post, and search filter depends on the taxonomy.
+
 ---
 
-Do NOT spend time on these documents yet.
+Do NOT spend time on this document yet.
 
 ```
-04-Master-Data-and-Reference-Data-Management.md
-
 05-Event-Driven-Architecture-and-Automation.md
 ```
 
-They become important during later phases.
+It becomes important during later phases.
 
 ---
 
@@ -481,6 +501,8 @@ Instead:
 The AI coding agent should follow these rules:
 
 - Do not implement features outside the current phase.
+- Restrict marketplace scope to the seven supported industries only.
+- Enforce Industry → Department → Role via master data; never allow free-text industries.
 - Respect the documented architecture.
 - Follow the project coding standards.
 - Use Firebase-first architecture.
@@ -501,31 +523,31 @@ The Phase 1 MVP is considered complete when the platform supports:
 
 - Registration
 - Authentication
-- Profile
+- Profile with Industry → Department → Role preferences
 - Resume Upload
-- Job Search
+- Job Search within the seven industries
 - Job Application
 - Application Tracking
 
 ### Employer
 
 - Registration
-- Company Profile
-- Job Posting
+- Company Profile tied to a supported industry
+- Job Posting via Industry → Department → Role
 - Job Management
 - Applicant Management
 
 ### Platform
 
 - Firebase Authentication
-- Firestore Database
+- Firestore Database (including `industries`, `departments`, `jobRoles`)
 - Cloud Storage
 - Cloud Functions
 - Responsive UI
 - Progressive Web App
 - Secure Multi-Tenant Architecture
 
-No attendance, payroll, leave management, employee lifecycle management, or advanced AI features should be implemented during this phase.
+No attendance, payroll, leave management, employee lifecycle management, or advanced AI features should be implemented during this phase. Unsupported industries outside the seven must not be added.
 
 ---
 
@@ -533,6 +555,6 @@ No attendance, payroll, leave management, employee lifecycle management, or adva
 
 The documentation repository is intentionally designed for the platform's entire lifecycle, spanning multiple years of development.
 
-For Phase 1, developers and AI coding agents should focus only on the documents that establish the product vision, architecture, engineering standards, and recruitment-related modules.
+For Phase 1, developers and AI coding agents should focus only on the documents that establish the product vision, seven-industry taxonomy, architecture, engineering standards, master data, and recruitment-related modules.
 
 Additional documentation should be consulted only when the corresponding feature enters active development, ensuring a focused, maintainable, and incremental implementation process.

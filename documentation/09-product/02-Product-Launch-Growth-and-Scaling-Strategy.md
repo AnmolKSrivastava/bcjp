@@ -7,7 +7,7 @@
 
 Building great software is only half of the journey. A successful SaaS platform also requires a well-planned strategy for launch, customer acquisition, onboarding, retention, support, and long-term growth.
 
-This document defines how the Workforce Management Platform evolves from a completed product into a sustainable business serving organizations of all sizes.
+This document defines how Bharat Gig evolves from a completed product into a sustainable business serving employers and workers across seven core industries.
 
 Unlike previous modules that focus on engineering, this module focuses on product operations, customer success, business growth, and platform maturity.
 
@@ -162,10 +162,13 @@ Validate the product with real organizations.
 
 Target Customers:
 
-- Small Businesses
-- Startups
-- Educational Institutions
-- NGOs
+- Construction contractors and site supervisors
+- Manufacturing plants and factory operators
+- Showrooms and mall retailers
+- Retail shop owners
+- Hospitals and clinics
+- Elderly-care providers
+- Restaurants and food-service operators
 
 Objectives:
 
@@ -238,20 +241,19 @@ Enterprise features include:
 
 Primary customers:
 
-- Small Businesses
-- Medium-sized Companies
-- Schools
-- Colleges
-- Hospitals
-- Manufacturing Units
-- Retail Chains
-- Service Companies
+- Construction companies
+- Manufacturing units
+- Showrooms and mall stores
+- Retail chains and independent shops
+- Hospitals and healthcare facilities
+- Elderly-care and home-nursing providers
+- Restaurants, hotels, and QSR operators
 
 Future customers:
 
-- Government Organizations
-- Large Enterprises
-- Multi-national Companies
+- Multi-location employers within the seven core industries
+- Staffing agencies that place workers only into the seven supported industries
+- Large enterprises with high-volume hiring in supported industries
 
 ---
 
@@ -373,11 +375,11 @@ Employee Import
 
 ↓
 
-Department Setup
+Department Setup (from platform taxonomy)
 
 ↓
 
-Role Configuration
+Role Configuration (from platform taxonomy)
 
 ↓
 

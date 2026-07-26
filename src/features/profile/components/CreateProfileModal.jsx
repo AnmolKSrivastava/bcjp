@@ -25,21 +25,15 @@ import {
 import { Input } from "@/lib/ui/input";
 import { Label } from "@/lib/ui/label";
 import { useAuth } from "@/features/auth";
+import {
+  TaxonomySelects,
+  displayIndustryLabel,
+  displayRoleLabel,
+  labelOf,
+  resolveTaxonomy
+} from "@/features/taxonomy";
 import { saveCandidateProfile } from "../services/candidateService";
 import { VoiceInterviewPanel } from "./VoiceInterviewPanel";
-
-const OCCUPATIONS = [
-  { en: "Electrician", hi: "इलेक्ट्रिशियन" },
-  { en: "Plumber", hi: "प्लंबर" },
-  { en: "Driver", hi: "ड्राइवर" },
-  { en: "Delivery Executive", hi: "डिलीवरी एग्जीक्यूटिव" },
-  { en: "Security Guard", hi: "सिक्योरिटी गार्ड" },
-  { en: "Factory Worker", hi: "फैक्ट्री वर्कर" },
-  { en: "Welder", hi: "वेल्डर" },
-  { en: "Housekeeping", hi: "हाउसकीपिंग" },
-  { en: "Cook", hi: "रसोइया" },
-  { en: "Other", hi: "अन्य" }
-];
 
 const EXPERIENCE_OPTIONS = [
   { en: "Less than 1 year", hi: "1 साल से कम" },
@@ -68,7 +62,9 @@ const LANGUAGE_OPTIONS = [
 
 const EMPTY_FORM = {
   fullName: "",
-  occupation: "",
+  industryId: "",
+  departmentId: "",
+  roleId: "",
   yearsOfExperience: "",
   preferredWorkLocation: "",
   expectedSalary: "",
@@ -88,8 +84,12 @@ const t = {
     successSubtitle: "You're ready to apply for jobs.",
     fullName: "Full Name",
     fullNamePlaceholder: "e.g. Rajesh Kumar",
-    occupation: "Job / Trade",
-    occupationPlaceholder: "Select your trade",
+    industry: "Industry",
+    industryPlaceholder: "Select industry",
+    department: "Department",
+    departmentPlaceholder: "Select department",
+    role: "Job Role",
+    rolePlaceholder: "Select job role",
     experience: "Experience",
     experiencePlaceholder: "Select experience",
     location: "Preferred Work Location",
@@ -135,8 +135,12 @@ const t = {
     successSubtitle: "अब आप नौकरियों के लिए आवेदन कर सकते हैं।",
     fullName: "पूरा नाम",
     fullNamePlaceholder: "जैसे राजेश कुमार",
-    occupation: "काम / व्यवसाय",
-    occupationPlaceholder: "अपना व्यवसाय चुनें",
+    industry: "उद्योग",
+    industryPlaceholder: "उद्योग चुनें",
+    department: "विभाग",
+    departmentPlaceholder: "विभाग चुनें",
+    role: "नौकरी की भूमिका",
+    rolePlaceholder: "भूमिका चुनें",
     experience: "अनुभव",
     experiencePlaceholder: "अनुभव चुनें",
     location: "काम की पसंदीदा जगह",
@@ -229,7 +233,9 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
     setForm((prev) => ({
       ...prev,
       fullName: parsed.fullName || "",
-      occupation: parsed.occupation || "",
+      industryId: parsed.industryId || "",
+      departmentId: parsed.departmentId || "",
+      roleId: parsed.roleId || "",
       yearsOfExperience: parsed.yearsOfExperience || "",
       preferredWorkLocation: parsed.preferredWorkLocation || "",
       expectedSalary: parsed.expectedSalary || "",
@@ -245,7 +251,9 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
 
   const isFormValid = () =>
     form.fullName.trim() &&
-    form.occupation &&
+    form.industryId &&
+    form.departmentId &&
+    form.roleId &&
     form.yearsOfExperience &&
     form.preferredWorkLocation.trim() &&
     form.expectedSalary.trim() &&
@@ -456,22 +464,22 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="occupation" className="text-xs sm:text-sm font-semibold text-[#0F172A]">
-                  {txt.occupation} *
-                </Label>
-                <select
-                  id="occupation"
-                  value={form.occupation}
-                  onChange={(e) => updateField("occupation", e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">{txt.occupationPlaceholder}</option>
-                  {OCCUPATIONS.map((o) => (
-                    <option key={o.en} value={o.en}>{o[lang]}</option>
-                  ))}
-                </select>
-              </div>
+              <TaxonomySelects
+                form={form}
+                lang={lang}
+                labels={{
+                  industry: txt.industry,
+                  industryPlaceholder: txt.industryPlaceholder,
+                  department: txt.department,
+                  departmentPlaceholder: txt.departmentPlaceholder,
+                  role: txt.role,
+                  rolePlaceholder: txt.rolePlaceholder
+                }}
+                onChange={(next) => {
+                  setForm((prev) => ({ ...prev, ...next }));
+                  setError(null);
+                }}
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -618,8 +626,14 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
                   <div className="min-w-0">
                     <h3 className="text-sm sm:text-xl font-bold text-[#0F172A] break-words">{form.fullName}</h3>
                     <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs sm:text-sm font-semibold text-[#2563EB]">
-                      {labelFor(OCCUPATIONS, form.occupation, lang)}
+                      {displayRoleLabel(form, lang)}
                     </span>
+                    <p className="mt-1 text-[10px] sm:text-xs text-[#64748B]">
+                      {displayIndustryLabel(form, lang)}
+                      {resolveTaxonomy(form)
+                        ? ` · ${labelOf(resolveTaxonomy(form).department, lang)}`
+                        : ""}
+                    </p>
                   </div>
                 </div>
 

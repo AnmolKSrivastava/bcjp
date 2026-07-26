@@ -94,8 +94,8 @@ Target Duration:
 
 - Job Listing
 - Search
-- Filters
-- Categories
+- Filters (Industry, Department, Role, City, Experience, Salary, Shift)
+- Industry → Department → Role Taxonomy
 - Locations
 - Saved Jobs
 - Apply
@@ -156,7 +156,7 @@ Phase 1B (2–3 weeks)
 Saved Jobs
 Company Profiles
 Candidate Profiles
-Job Categories
+Industry / Department / Role Taxonomy (seed seven industries)
 Search Filters
 Email Notifications
 Application Tracking
@@ -321,13 +321,14 @@ Manager Portal
 Features
 
 - Multiple Branches
-- Departments
-- Roles
-- Permissions
+- Departments (mapped to platform taxonomy)
+- Job Roles & Permissions
 - Approval Chains
 - Organization Settings
 - Branding
 - Multi-tenancy
+
+Platform administrators manage the Industry → Department → Role taxonomy; organizations select from it — they do not create arbitrary job categories.
 
 ---
 

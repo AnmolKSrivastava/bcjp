@@ -12,6 +12,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
+import { displayIndustryLabel, displayRoleLabel } from "@/features/taxonomy";
 import {
   closeJobOpening,
   listOrganizationJobs,
@@ -368,7 +369,12 @@ function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick })
                           className="w-full text-left"
                         >
                           <div className="mb-2 flex items-start justify-between gap-2">
-                            <h3 className="text-base font-bold text-[#0F172A]">{job.title}</h3>
+                            <h3 className="text-base font-bold text-[#0F172A]">
+                              {displayRoleLabel(job, lang)}
+                            </h3>
+                            {displayIndustryLabel(job, lang) ? (
+                              <p className="text-xs text-[#94A3B8]">{displayIndustryLabel(job, lang)}</p>
+                            ) : null}
                             <span
                               className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${isOpen ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-600"}`}
                             >
@@ -430,7 +436,7 @@ function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick })
                   <option value="all">{txt.allJobs}</option>
                   {jobs.map((job) => (
                     <option key={job.id} value={job.id}>
-                      {job.title}
+                      {displayRoleLabel(job, lang)}
                     </option>
                   ))}
                 </select>

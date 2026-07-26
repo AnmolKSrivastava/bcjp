@@ -79,7 +79,7 @@ Leaves Company
 
 ↓
 
-Joins XYZ Logistics
+Joins Metro Retail Chain
 
 ↓
 
@@ -209,7 +209,7 @@ Employment Information
 - Branch
 - Location
 - Reporting Manager
-- Designation
+- Job Role
 
 Employment Details
 
@@ -248,7 +248,7 @@ ABC Hospital
 
 ↓
 
-XYZ Logistics
+Metro Retail Chain
 
 2028-Present
 ```
@@ -294,7 +294,7 @@ employees/
 
         locationId
 
-        designationId
+        jobRoleId
 
         managerId
 
@@ -415,19 +415,21 @@ Departments come from Organization Management.
 
 ---
 
-# Designations
+# Job Roles
+
+Every employee is assigned a platform job role from the Industry → Department → Role taxonomy.
 
 Master Data examples:
 
-- Security Guard
-- Staff Nurse
-- Supervisor
-- HR Executive
-- Machine Operator
-- Delivery Executive
-- Driver
+- Electrician (construction / electrical)
+- Machine Operator (manufacturing / production)
+- Ward Boy (hospital / housekeeping)
+- Sales Executive (showroom / sales)
+- Cashier (retail / billing)
+- Caregiver (elderly-care / home care)
+- Chef (restaurant / kitchen)
 
-Designations should be standardized.
+Job roles should be standardized via `jobRoleId` — not free-text designations.
 
 ---
 
@@ -543,7 +545,7 @@ Search by:
 - Manager
 - Branch
 - Shift
-- Designation
+- Job Role
 - Employment Status
 - Joining Date
 

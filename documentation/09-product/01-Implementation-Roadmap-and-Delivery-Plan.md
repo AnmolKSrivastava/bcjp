@@ -147,6 +147,7 @@ Deliverables
 - Authentication
 - Base UI Components
 - Design System
+- Platform Taxonomy Seed (seven industries, departments, job roles)
 - Documentation
 
 Estimated Duration

@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { getFirebaseDb } from "@/lib/firebase";
 import { COLLECTIONS } from "@/utils/constants";
+import { getIndustry } from "@/features/taxonomy";
 
 function organizationDocRef(orgId) {
   return doc(getFirebaseDb(), COLLECTIONS.ORGANIZATIONS, orgId);
@@ -23,10 +24,18 @@ async function fetchOrganization(orgId) {
  * Create organization and link it to the employer user account.
  */
 async function saveOrganizationProfile(userId, formData, phone) {
+  const industry = getIndustry(formData.industryId);
+  if (!industry) {
+    throw new Error("Please select a valid industry from the seven supported industries.");
+  }
+
   const orgRef = doc(collection(getFirebaseDb(), COLLECTIONS.ORGANIZATIONS));
   const organization = {
     name: formData.companyName.trim(),
-    industry: formData.industry,
+    industryId: industry.id,
+    industryName: industry.en,
+    // Legacy field for older UI
+    industry: industry.en,
     city: formData.city.trim(),
     contactPersonName: formData.contactPersonName.trim(),
     contactPhone: phone ?? "",

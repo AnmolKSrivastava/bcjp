@@ -119,9 +119,13 @@ The visitor could be:
 - Worker
 - Employer
 - Recruiter
+- Construction firm
+- Manufacturing company
+- Showroom or mall
+- Retail shop
 - Hospital
-- Factory
-- Retail Company
+- Elderly-care provider
+- Restaurant
 
 ---
 
@@ -221,6 +225,7 @@ Workers provide:
 
 - Name
 - Address
+- Preferred Industry → Department → Role (from master data)
 - Skills
 - Experience
 - Languages
@@ -231,7 +236,7 @@ Employers provide:
 
 - Company Name
 - GST (optional initially)
-- Industry
+- Industry (one of the seven supported industries; no free-text)
 - Office Location
 - Contact Person
 
@@ -259,7 +264,7 @@ Employer Verification
 
 Skill Verification
 
-Police Verification (Care Module)
+Police Verification (Hospital Staff / Elderly Care)
 
 Medical Verification
 
@@ -267,15 +272,15 @@ Experience Verification
 
 Not every verification is mandatory.
 
-Verification requirements depend on industry.
+Verification requirements depend on industry (within the seven supported industries).
 
 ---
 
 Example
 
-A warehouse helper may only need Aadhaar verification.
+A manufacturing machine operator or construction helper may only need Aadhaar verification.
 
-A caregiver may require:
+An elderly-care caregiver or hospital ward boy may require:
 
 - Police Verification
 - Medical Certificate
@@ -347,7 +352,11 @@ Location
 
 Salary
 
-Industry
+Industry (seven supported only)
+
+Department
+
+Role
 
 Distance
 
@@ -359,6 +368,8 @@ Shift Timing
 
 Job Type
 
+Jobs and filters use master collections `industries`, `departments`, and `jobRoles`. Free-text industries are not allowed.
+
 ---
 
 Future Recommendation Engine
@@ -368,6 +379,10 @@ Instead of searching,
 the platform should recommend jobs.
 
 Based on:
+
+Industry → Department → Role match
+
+↓
 
 Location
 
@@ -503,7 +518,7 @@ the employee receives:
 
 Organization
 
-Department
+Industry → Department → Role
 
 Supervisor
 
@@ -926,7 +941,8 @@ A feature that cannot be mapped to the lifecycle should be questioned before imp
 
 # Key Takeaways
 
-- The platform manages the complete employment lifecycle, not just hiring.
+- The platform manages the complete employment lifecycle within the seven supported industries, not just hiring.
+- Profiles, jobs, search, and recommendations use Industry → Department → Role from master data (`industries`, `departments`, `jobRoles`).
 - Registration, verification, onboarding, attendance, payroll, and career growth are interconnected stages.
 - Attendance is the operational source of truth for payroll.
 - Employment history is a long-term asset that benefits both workers and employers.

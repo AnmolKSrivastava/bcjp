@@ -23,12 +23,14 @@ Master Data changes very rarely.
 
 Examples:
 
-- Skills
-- Industries
+- Industries (exactly seven)
+- Departments (belong to one industry)
+- Job Roles (belong to one department)
+- Skills (supplementary, not a substitute for role)
 - Languages
 - States
 - Cities
-- Job Categories
+- Employment Types (Full-Time, Daily Wage, etc.)
 
 Although master data represents only a small percentage of the database, it influences almost every module.
 
@@ -46,7 +48,9 @@ Unlike business data, it is owned by the platform itself.
 
 Examples include:
 
-- Industries
+- Industries (fixed set of seven)
+- Departments
+- Job Roles
 - Skills
 - Languages
 - Certifications
@@ -55,8 +59,21 @@ Examples include:
 - Cities
 - Shift Types
 - Leave Types
+- Employment Types
 
 Users should select these values rather than creating arbitrary text whenever possible.
+
+The employment taxonomy hierarchy is mandatory:
+
+```
+Industry
+    ↓
+Department
+    ↓
+Job Role
+```
+
+Never store free-text industry names on jobs or profiles when a master ID exists.
 
 ---
 
@@ -102,7 +119,7 @@ from a standardized list.
 
 Platform administrators own master data.
 
-Workers should not create new industries or job categories.
+Workers and employers should not create new industries, departments, or job roles. Only platform admins may extend departments and roles. The seven industries themselves should rarely change.
 
 ---
 
@@ -122,59 +139,72 @@ One Skills collection should support:
 
 # Master Data Categories
 
+## Industries (canonical — exactly seven)
+
+| industryId | Name |
+|------------|------|
+| `construction` | Construction Workers |
+| `manufacturing` | Manufacturing Company Workers |
+| `showroom` | Showrooms & Mall Executives |
+| `retail` | Retail Shop Workers |
+| `hospital` | Hospital Staff |
+| `elderly-care` | Elderly Care |
+| `restaurant` | Restaurant Staff |
+
+These are the only industries the platform supports. Do not add catch-all or “other” industries in product UI.
+
+---
+
+## Departments
+
+Each department belongs to exactly one industry.
+
+Examples:
+
+| Department | Industry |
+|------------|----------|
+| Civil / Electrical / Plumbing / Carpentry / Painting / Welding | Construction |
+| Production / Assembly / Packaging / Warehouse / Quality Control / Maintenance | Manufacturing |
+| Sales / Customer Support / Cashier / Visual Merchandising / Store Management | Showroom |
+| Sales / Inventory / Delivery / Counter / Store Assistant | Retail |
+| Nursing / Ward / Lab / Reception / Housekeeping / Ambulance | Hospital |
+| Home Nursing / Caregiving / Companionship / Dementia Care / Palliative Care | Elderly Care |
+| Kitchen / Service / Operations | Restaurant |
+
+---
+
+## Job Roles
+
+Each role belongs to exactly one department.
+
+Examples:
+
+| Role | Department | Industry |
+|------|------------|----------|
+| Electrician | Electrical | Construction |
+| Machine Operator | Production | Manufacturing |
+| Floor Executive | Sales | Showroom |
+| Cashier | Counter | Retail |
+| Ward Boy | Ward | Hospital |
+| Caregiver | Caregiving | Elderly Care |
+| Chef | Kitchen | Restaurant |
+| Waiter | Service | Restaurant |
+
+---
+
 ## Skills
 
-Examples
+Skills are optional tags that refine a role; they do **not** replace Industry → Department → Role.
 
-Electrician
+Examples within scope:
 
-Welder
+Electrician wiring, Welder MIG, Machine Operator CNC, Retail upselling, Nursing vitals, Dementia care, Commis prep, Kitchen hygiene.
 
-Driver
-
-Security Guard
-
-Machine Operator
-
-Retail Sales
-
-Warehouse Worker
-
-Plumber
-
-Cook
-
-Caregiver
+Out-of-scope standalone occupations (for example private security guard as an industry, logistics fleet driver as an industry) must not appear as top-level industries.
 
 ---
 
-## Industries
-
-Manufacturing
-
-Healthcare
-
-Retail
-
-Hospitality
-
-Construction
-
-Education
-
-Security
-
-Facility Management
-
-Domestic Services
-
-Logistics
-
-Transportation
-
----
-
-## Job Categories
+## Employment Types
 
 Full-Time
 
@@ -192,19 +222,13 @@ Freelance
 
 Seasonal
 
----
-
-## Employment Types
-
 Permanent
-
-Contract
-
-Temporary
 
 Project Based
 
 Apprenticeship
+
+Employment type describes *how* someone is hired. It is separate from Industry → Department → Role (*what* work they do).
 
 ---
 
@@ -262,23 +286,25 @@ Doctorate
 
 ## Certifications
 
-Forklift Operator
-
-Driving License
-
-Nursing License
+Examples aligned to supported industries:
 
 Electrician License
 
-Fire Safety
-
 Industrial Safety
+
+Forklift Operator (Manufacturing warehouse)
+
+Nursing License
+
+Medical Clearance
 
 First Aid
 
-Police Verification
+Fire Safety
 
-Medical Clearance
+Food Handler / FSSAI-related certifications (Restaurant)
+
+Police Verification (where required by employer)
 
 ---
 
@@ -403,26 +429,18 @@ This improves search quality.
 # Firestore Collections
 
 ```
-masterData/
-
+industries/          # exactly seven documents
+departments/         # each has industryId
+jobRoles/            # each has departmentId (+ industryId denormalized optional)
 skills/
-
-industries/
-
 languages/
-
 states/
-
 districts/
-
 cities/
-
 certifications/
-
 shiftTypes/
-
 leaveTypes/
-
+employmentTypes/
 notificationTemplates/
 ```
 
@@ -467,16 +485,43 @@ AI can use synonyms during matching.
 # Example Industry Document
 
 ```
-industries/
+industries/construction
 
-    industryId
-
-        name
-
-        icon
-
-        active
+    industryId: construction
+    name: Construction Workers
+    icon: construction
+    sortOrder: 1
+    active: true
 ```
+
+---
+
+# Example Department Document
+
+```
+departments/construction-electrical
+
+    departmentId: construction-electrical
+    industryId: construction
+    name: Electrical
+    active: true
+```
+
+---
+
+# Example Job Role Document
+
+```
+jobRoles/construction-electrical-electrician
+
+    roleId: construction-electrical-electrician
+    departmentId: construction-electrical
+    industryId: construction
+    name: Electrician
+    active: true
+```
+
+Validate on write: role.departmentId must belong to role.industryId; department.industryId must be one of the seven industries.
 
 ---
 
@@ -555,11 +600,15 @@ Master data changes infrequently.
 
 The frontend should cache:
 
+Industries
+
+Departments
+
+Job Roles
+
 Skills
 
 Languages
-
-Industries
 
 States
 
@@ -667,7 +716,7 @@ Example
 
 Worker says:
 
-"I fix electrical wiring."
+"I fix electrical wiring on construction sites."
 
 ↓
 
@@ -677,13 +726,15 @@ AI
 
 Maps to
 
-Electrician
+industryId: construction  
+departmentId: construction-electrical  
+roleId: construction-electrical-electrician
 
 ↓
 
 Profile Updated
 
-This standardization significantly improves recommendation quality.
+Recommendations then prioritize Industry match, then Department, then Role, then skills.
 
 ---
 
@@ -696,33 +747,29 @@ Example
 Good
 
 ```
-skillId = electrician
+industryId = construction
+departmentId = construction-electrical
+roleId = construction-electrical-electrician
 ```
 
 Bad
 
 ```
-Electrician
-
-electrician
-
-Electrical Worker
-
-Electrician
-
+industry = "Electrician work"
+category = "Blue collar"
 ```
 
 ---
 
 # Edge Cases
 
-Inactive Skills
+Inactive Roles / Departments
 
 Duplicate Cities
 
-Merged Industries
+Attempts to add unsupported industries
 
-Deleted Categories
+Invalid Industry → Department → Role combinations
 
 Misspelled Data
 
@@ -738,9 +785,13 @@ Historical values should remain valid.
 
 Included
 
-✅ Skills
+✅ Industries (seven fixed documents)
 
-✅ Industries
+✅ Departments
+
+✅ Job Roles
+
+✅ Skills (supplementary)
 
 ✅ States
 
@@ -748,13 +799,15 @@ Included
 
 ✅ Languages
 
-✅ Job Categories
+✅ Employment Types
 
 Excluded
 
-❌ Government Sync
+❌ Unlimited / catch-all industries
 
-❌ AI Auto Classification
+❌ Free-text industry fields on jobs
+
+❌ Government Sync
 
 ❌ Dynamic Translation
 
@@ -764,11 +817,12 @@ Excluded
 
 Master data is complete when:
 
-- Shared lookup collections exist.
-- Autocomplete uses standardized values.
-- AI can reference master data.
-- Reports rely on IDs rather than free text.
-- Only administrators can modify reference data.
+- Exactly seven industry documents exist and are used everywhere.
+- Departments and job roles form a valid Industry → Department → Role hierarchy.
+- Jobs and profiles store industryId / departmentId / roleId (not free-text industry).
+- Autocomplete and dropdowns cascade: Industry → Department → Role.
+- AI and reports use taxonomy IDs rather than free text.
+- Only administrators can create/update departments and roles; industries change rarely.
 
 ---
 
@@ -776,8 +830,10 @@ Master data is complete when:
 
 Create Firestore collections for:
 
+- Industries (seed seven)
+- Departments
+- Job Roles
 - Skills
-- Industries
 - Languages
 - States
 - Districts
@@ -785,14 +841,16 @@ Create Firestore collections for:
 - Certifications
 - Shift Types
 - Leave Types
+- Employment Types
 
 Implement:
 
-- Admin CRUD
+- Admin CRUD for departments and roles
+- Cascading dropdowns Industry → Department → Role
 - Cached frontend lookups
-- Autocomplete
-- Search filtering
+- Hierarchy validation on job/profile write
 - Firestore Security Rules
+- Search filtering by taxonomy IDs
 
 ---
 
@@ -841,6 +899,7 @@ This approach keeps the application consistent, simplifies localization, improve
 # Key Takeaways
 
 - Master Data is shared, standardized information used across the entire platform.
+- The employment taxonomy is exactly seven industries with Industry → Department → Role.
 - Reference values should be selected from controlled collections rather than entered as arbitrary text.
 - Master Data enables consistent analytics, multilingual support, and high-quality AI recommendations.
 - These collections change infrequently and should be cached aggressively.

@@ -292,21 +292,45 @@ Current Occupation
 
 Years of Experience
 
-Preferred Industry
+Preferred Industry (industryId / industryName — one of the seven)
+
+Preferred Department (departmentId / departmentName)
+
+Preferred Role (roleId / roleName)
 
 Preferred Salary
 
-Employment Type
+Preferred City
+
+Preferred Shift
+
+Employment Type (full-time, daily wage, etc. — separate from taxonomy)
+
+Languages
+
+Skills
 
 Availability
 
 Notice Period
 
+Preferred Industry, Department, and Role must use cascading Master Data selections. Do not store free-text industry or a flat “Job Category.”
+
+Supported industries only:
+
+- construction
+- manufacturing
+- showroom
+- retail
+- hospital
+- elderly-care
+- restaurant
+
 ---
 
 ## Skills
 
-Examples:
+Examples aligned to supported industries:
 
 Electrician
 
@@ -318,19 +342,21 @@ Machine Operator
 
 Retail Sales
 
-Delivery
+Cashier
 
-Warehouse Operations
-
-Security
-
-Driving
+Kitchen Helper
 
 Cooking
 
 Housekeeping
 
-Caregiving
+Patient Care
+
+Caregiving (elderly-care / hospital roles)
+
+Packaging
+
+Quality Control
 
 Each skill should include:
 
@@ -474,7 +500,7 @@ Fields include:
 
 Company Name
 
-Industry
+Industry (industryId — must be one of the seven supported industries)
 
 GST (optional)
 
@@ -493,6 +519,8 @@ Organization Size
 Verification Status
 
 Employer Rating
+
+If an employer operates across multiple lines of business, each industry selection must still be among the seven. Do not allow out-of-scope industries (for example security agency or logistics as a top-level industry).
 
 ---
 
@@ -530,6 +558,8 @@ Generated from
 
 Personal Details
 
+Preferred Industry / Department / Role
+
 Skills
 
 Experience
@@ -539,6 +569,8 @@ Education
 Certificates
 
 Employment History
+
+Resume and voice builders should ask Industry → Department → Role (cascading), not open-ended “what type of job.” AI should generate content only for experience relevant to those selected values.
 
 Users should never edit the resume directly.
 
@@ -642,13 +674,17 @@ Every profile should generate a searchable index.
 
 Search fields include:
 
-Location
+Preferred Industry (industryId)
+
+Preferred Department (departmentId)
+
+Preferred Role (roleId)
+
+Location / City
 
 Skills
 
 Experience
-
-Industry
 
 Availability
 
@@ -656,9 +692,13 @@ Language
 
 Expected Salary
 
+Employment Type
+
+Shift
+
 Verification Status
 
-This index supports employer search and AI recommendations.
+This index supports employer search and AI recommendations within the seven-industry taxonomy.
 
 ---
 
@@ -860,6 +900,8 @@ Depends on:
 
 Authentication
 
+Master Data (`industries`, `departments`, `jobRoles`)
+
 Provides data to:
 
 Jobs
@@ -888,6 +930,8 @@ Treat the profile as the **single source of truth** for all professional informa
 
 Never duplicate profile fields inside other modules.
 
+Candidate preferences must store industryId, departmentId, and roleId from Master Data—not free-text industry labels.
+
 For example:
 
 The Jobs module should reference the user's skills rather than storing a separate copy.
@@ -901,8 +945,9 @@ This principle keeps the platform consistent and prevents data synchronization i
 # Key Takeaways
 
 - Authentication establishes identity; the Profile module establishes professional identity.
+- Candidate preferences use Preferred Industry / Department / Role within the seven supported industries.
 - Profiles evolve throughout a worker's career rather than being completed once.
-- Resume generation should always derive from profile data.
+- Resume generation should always derive from profile data and the taxonomy hierarchy.
 - Progressive profile completion improves user onboarding.
 - Other modules should consume profile data rather than duplicating it.
 

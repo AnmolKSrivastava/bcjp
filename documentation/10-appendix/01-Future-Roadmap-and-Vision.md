@@ -191,7 +191,7 @@ Potential marketplace categories:
 - Reporting Templates
 - HR Forms
 - Compliance Packs
-- Industry-specific Modules
+- Industry Workflow Extensions (for the seven core industries only)
 
 Marketplace participants:
 
@@ -282,7 +282,27 @@ These capabilities require historical data and machine learning models.
 
 ---
 
-# Global Expansion
+# Industry Depth Strategy
+
+Bharat Gig is a **specialized hiring platform** for seven industries — not a generic job board for every occupation.
+
+Future investment should **deepen** capabilities within:
+
+- Construction
+- Manufacturing
+- Showroom
+- Retail
+- Hospital
+- Elderly Care
+- Restaurant
+
+Examples of deepening (not expanding to new verticals):
+
+- Construction: site-safety certifications, trade-specific skill matching
+- Restaurant: shift-based staffing, kitchen/service role templates
+- Hospital: ward staffing ratios, license verification workflows
+
+The platform does not promise unlimited industry-specific editions or support for arbitrary new verticals.
 
 Future platform capabilities:
 
@@ -541,7 +561,7 @@ The platform should remain practical today while being prepared for tomorrow.
 
 - AI-native Workflow Builder
 - Multi-cloud Deployment
-- Industry-specific Editions
+- Deepened capabilities within the seven core industries (construction, manufacturing, showroom, retail, hospital, elderly-care, restaurant)
 - Partner Certification Program
 - Open SDK
 - Public Developer Portal
@@ -569,6 +589,7 @@ The long-term vision is complete when:
 
 - The Workforce Management Platform is envisioned as a long-term Workforce Operating System rather than a traditional HR application.
 - AI, automation, analytics, and ecosystem integrations will gradually transform the platform while preserving a stable architectural foundation.
+- Future capabilities deepen the seven core industries rather than expanding to unlimited verticals.
 - Future capabilities should be introduced incrementally based on validated customer needs rather than speculative implementation.
 - Every architectural decision made today should enable future growth without compromising simplicity during the MVP phase.
 

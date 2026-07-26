@@ -22,21 +22,15 @@ import { Input } from "@/lib/ui/input";
 import { Label } from "@/lib/ui/label";
 import { Textarea } from "@/lib/ui/textarea";
 import { useAuth } from "@/features/auth";
+import {
+  TaxonomySelects,
+  displayIndustryLabel,
+  displayRoleLabel,
+  labelOf,
+  resolveTaxonomy
+} from "@/features/taxonomy";
 import { createJobOpening } from "../services/jobService";
 import { fetchOrganization } from "../services/organizationService";
-
-const JOB_TITLES = [
-  { en: "Electrician", hi: "इलेक्ट्रिशियन" },
-  { en: "Plumber", hi: "प्लंबर" },
-  { en: "Driver", hi: "ड्राइवर" },
-  { en: "Delivery Executive", hi: "डिलीवरी एग्जीक्यूटिव" },
-  { en: "Security Guard", hi: "सिक्योरिटी गार्ड" },
-  { en: "Factory Worker", hi: "फैक्ट्री वर्कर" },
-  { en: "Welder", hi: "वेल्डर" },
-  { en: "Housekeeping", hi: "हाउसकीपिंग" },
-  { en: "Cook", hi: "रसोइया" },
-  { en: "Other", hi: "अन्य" }
-];
 
 const EMPLOYMENT_TYPES = [
   { en: "Full Time", hi: "पूर्णकालिक" },
@@ -54,7 +48,9 @@ const EXPERIENCE_OPTIONS = [
 ];
 
 const EMPTY_FORM = {
-  title: "",
+  industryId: "",
+  departmentId: "",
+  roleId: "",
   employmentType: "",
   location: "",
   salaryMin: "",
@@ -73,8 +69,12 @@ const t = {
     previewSubtitle: "Check everything before publishing.",
     successTitle: "Job Posted!",
     successSubtitle: "Workers can now see and apply to this job.",
-    jobTitle: "Job Title",
-    jobTitlePlaceholder: "Select job title",
+    industry: "Industry",
+    industryPlaceholder: "Select industry",
+    department: "Department",
+    departmentPlaceholder: "Select department",
+    role: "Job Role",
+    rolePlaceholder: "Select job role",
     employmentType: "Job Type",
     employmentTypePlaceholder: "Select type",
     location: "Work Location",
@@ -114,8 +114,12 @@ const t = {
     previewSubtitle: "प्रकाशित करने से पहले सब कुछ जाँच लें।",
     successTitle: "नौकरी पोस्ट हो गई!",
     successSubtitle: "अब कर्मचारी इस नौकरी को देख और आवेदन कर सकते हैं।",
-    jobTitle: "नौकरी का नाम",
-    jobTitlePlaceholder: "नौकरी चुनें",
+    industry: "उद्योग",
+    industryPlaceholder: "उद्योग चुनें",
+    department: "विभाग",
+    departmentPlaceholder: "विभाग चुनें",
+    role: "नौकरी की भूमिका",
+    rolePlaceholder: "भूमिका चुनें",
     employmentType: "नौकरी का प्रकार",
     employmentTypePlaceholder: "प्रकार चुनें",
     location: "काम की जगह",
@@ -201,7 +205,9 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
   };
 
   const isFormValid = () =>
-    form.title &&
+    form.industryId &&
+    form.departmentId &&
+    form.roleId &&
     form.employmentType &&
     form.location.trim() &&
     form.salaryMin.trim() &&
@@ -340,22 +346,22 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
                 </p>
               )}
 
-              <div className="space-y-1.5">
-                <Label htmlFor="jobTitle" className="text-xs sm:text-sm font-semibold text-[#0F172A]">
-                  {txt.jobTitle} *
-                </Label>
-                <select
-                  id="jobTitle"
-                  value={form.title}
-                  onChange={(e) => updateField("title", e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">{txt.jobTitlePlaceholder}</option>
-                  {JOB_TITLES.map((o) => (
-                    <option key={o.en} value={o.en}>{o[lang]}</option>
-                  ))}
-                </select>
-              </div>
+              <TaxonomySelects
+                form={form}
+                lang={lang}
+                labels={{
+                  industry: txt.industry,
+                  industryPlaceholder: txt.industryPlaceholder,
+                  department: txt.department,
+                  departmentPlaceholder: txt.departmentPlaceholder,
+                  role: txt.role,
+                  rolePlaceholder: txt.rolePlaceholder
+                }}
+                onChange={(next) => {
+                  setForm((prev) => ({ ...prev, ...next }));
+                  setError(null);
+                }}
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -504,9 +510,15 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm sm:text-xl font-bold text-[#0F172A] break-words">
-                      {labelFor(JOB_TITLES, form.title, lang)}
+                      {displayRoleLabel(form, lang)}
                     </h3>
                     <p className="text-xs sm:text-sm font-semibold text-[#64748B]">{organization?.name}</p>
+                    <p className="mt-0.5 text-[10px] sm:text-xs text-[#64748B]">
+                      {displayIndustryLabel(form, lang)}
+                      {resolveTaxonomy(form)
+                        ? ` · ${labelOf(resolveTaxonomy(form).department, lang)}`
+                        : ""}
+                    </p>
                     <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs sm:text-sm font-semibold text-[#2563EB]">
                       {labelFor(EMPLOYMENT_TYPES, form.employmentType, lang)}
                     </span>
@@ -587,7 +599,7 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
                 <p className="text-[10px] sm:text-xs font-semibold text-[#64748B]">{txt.jobId}</p>
                 <p className="text-lg sm:text-2xl font-bold text-[#0F172A]">{jobId}</p>
                 <p className="mt-1 sm:mt-2 text-xs sm:text-sm font-semibold text-[#0F172A]">
-                  {labelFor(JOB_TITLES, savedJob?.title, lang)}
+                  {displayRoleLabel(savedJob, lang)}
                 </p>
               </div>
 

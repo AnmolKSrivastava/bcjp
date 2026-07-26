@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { getFirebaseDb } from "@/lib/firebase";
 import { COLLECTIONS } from "@/utils/constants";
+import { isValidTaxonomy, taxonomyPayload } from "@/features/taxonomy";
 
 function jobDocRef(jobId) {
   return doc(getFirebaseDb(), COLLECTIONS.JOB_OPENINGS, jobId);
@@ -100,6 +101,22 @@ async function createJobOpening({ userId, organization, formData }) {
     throw new Error("Organization is required to post a job.");
   }
 
+  if (
+    !isValidTaxonomy({
+      industryId: formData.industryId,
+      departmentId: formData.departmentId,
+      roleId: formData.roleId
+    })
+  ) {
+    throw new Error("Please select a valid industry, department, and job role.");
+  }
+
+  const taxonomy = taxonomyPayload({
+    industryId: formData.industryId,
+    departmentId: formData.departmentId,
+    roleId: formData.roleId
+  });
+
   const jobRef = doc(collection(getFirebaseDb(), COLLECTIONS.JOB_OPENINGS));
   const salaryMin = parseSalaryNumber(formData.salaryMin);
   const salaryMax = parseSalaryNumber(formData.salaryMax);
@@ -108,7 +125,9 @@ async function createJobOpening({ userId, organization, formData }) {
   const job = {
     organizationId: organization.id,
     organizationName: organization.name ?? "",
-    title: formData.title.trim(),
+    ...taxonomy,
+    // Legacy field kept for older listings that read title
+    title: taxonomy.roleName,
     description: formData.description.trim(),
     employmentType: formData.employmentType,
     location: formData.location.trim(),

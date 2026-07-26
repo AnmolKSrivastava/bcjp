@@ -21,6 +21,8 @@ The Workforce Management Platform exists to simplify workforce operations throug
 
 The objective is not merely to digitize HR processes, but to create a modern Workforce Operating System that enables organizations to manage people, processes, compliance, communication, and decision-making from a single platform.
 
+Bharat Gig is a **specialized platform** for seven core industries (construction, manufacturing, showroom, retail, hospital, elderly-care, restaurant) — not a generic HRMS for every vertical. Architectural and product decisions should reinforce this focused scope.
+
 Artificial Intelligence should enhance human decision-making rather than replace it.
 
 Every engineering decision should ultimately improve the daily experience of administrators, HR teams, managers, and employees.
@@ -542,7 +544,7 @@ The success of the platform will depend not only on the quality of its code but 
 
 The goal is not to build the largest HR platform.
 
-The goal is to build the most useful, reliable, intelligent, and maintainable Workforce Operating System for organizations of every size.
+The goal is to build the most useful, reliable, intelligent, and maintainable Workforce Operating System for employers and workers in Bharat Gig's seven core industries.
 
 ---
 

@@ -1,17 +1,5 @@
 const OpenAI = require("openai");
-
-const OCCUPATIONS = [
-  "Electrician",
-  "Plumber",
-  "Driver",
-  "Delivery Executive",
-  "Security Guard",
-  "Factory Worker",
-  "Welder",
-  "Housekeeping",
-  "Cook",
-  "Other"
-];
+const { flattenForPrompt, resolveTaxonomyIds } = require("./taxonomy");
 
 const EXPERIENCE_OPTIONS = [
   "Less than 1 year",
@@ -53,6 +41,7 @@ async function parseVoiceProfileAnswers({ interviewLanguage, siteLanguage, answe
 
   const client = getOpenAIClient();
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const taxonomy = flattenForPrompt();
 
   const qaText = answers
     .map((item, index) => {
@@ -62,11 +51,13 @@ async function parseVoiceProfileAnswers({ interviewLanguage, siteLanguage, answe
     })
     .join("\n\n");
 
-  const system = `You extract structured job-seeker profile data for Bharat Gig, an Indian blue-collar job portal.
+  const system = `You extract structured job-seeker profile data for Bharat Gig, a specialized Indian hiring platform for exactly seven industries.
 Return ONLY valid JSON with these keys:
 {
   "fullName": string,
-  "occupation": one of ${JSON.stringify(OCCUPATIONS)},
+  "industryId": string,
+  "departmentId": string,
+  "roleId": string,
   "yearsOfExperience": one of ${JSON.stringify(EXPERIENCE_OPTIONS)},
   "preferredWorkLocation": string (city/area in India),
   "expectedSalary": string (include ₹ and /month when possible),
@@ -75,9 +66,14 @@ Return ONLY valid JSON with these keys:
   "languages": string[] (subset of ${JSON.stringify(LANGUAGE_OPTIONS)})
 }
 
+Supported taxonomy (use exact IDs only):
+${JSON.stringify(taxonomy)}
+
 Rules:
-- Interview language may be English, Hindi, Bengali, Marathi, or Tamil. Understand the answers and map to the English enum values above.
-- If occupation is unclear, use "Other".
+- Interview language may be English, Hindi, Bengali, Marathi, or Tamil. Understand answers and map to English enum / taxonomy IDs.
+- industryId, departmentId, and roleId MUST form a valid path in the taxonomy above.
+- Prefer the closest matching role; never invent IDs.
+- If taxonomy is unclear, pick the best available construction / manufacturing / restaurant / hospital / elderly-care / retail / showroom path that fits.
 - If experience is unclear, pick the closest EXPERIENCE option.
 - If availability is unclear, use "Immediate".
 - Always include the interview language in "languages" when it maps to LANGUAGE_OPTIONS.
@@ -112,7 +108,21 @@ ${qaText}`;
 }
 
 function normalizeProfile(parsed) {
-  const occupation = OCCUPATIONS.includes(parsed.occupation) ? parsed.occupation : "Other";
+  const resolved = resolveTaxonomyIds({
+    industryId: parsed.industryId,
+    departmentId: parsed.departmentId,
+    roleId: parsed.roleId
+  });
+
+  // Fallback if model returns invalid path
+  const fallback = resolveTaxonomyIds({
+    industryId: "manufacturing",
+    departmentId: "manufacturing-others",
+    roleId: "manufacturing-others-helper"
+  });
+
+  const taxonomy = resolved || fallback;
+
   const yearsOfExperience = EXPERIENCE_OPTIONS.includes(parsed.yearsOfExperience)
     ? parsed.yearsOfExperience
     : "Less than 1 year";
@@ -126,7 +136,9 @@ function normalizeProfile(parsed) {
 
   return {
     fullName: String(parsed.fullName ?? "").trim(),
-    occupation,
+    industryId: taxonomy.industry.id,
+    departmentId: taxonomy.department.id,
+    roleId: taxonomy.role.id,
     yearsOfExperience,
     preferredWorkLocation: String(parsed.preferredWorkLocation ?? "").trim(),
     expectedSalary: String(parsed.expectedSalary ?? "").trim(),
@@ -138,7 +150,6 @@ function normalizeProfile(parsed) {
 
 module.exports = {
   parseVoiceProfileAnswers,
-  OCCUPATIONS,
   EXPERIENCE_OPTIONS,
   AVAILABILITY_OPTIONS,
   LANGUAGE_OPTIONS

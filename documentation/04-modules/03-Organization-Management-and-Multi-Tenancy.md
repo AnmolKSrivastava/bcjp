@@ -28,17 +28,19 @@ This module transforms the platform from a simple job portal into a true enterpr
 
 # Business Purpose
 
-The platform should support companies of every size.
+The platform should support companies of every size within Bharat Gig’s seven supported industries.
 
 Examples:
 
-- Manufacturing Company
-- Hospital
-- Retail Chain
-- Security Agency
-- Warehouse
 - Construction Company
-- Domestic Service Agency
+- Manufacturing Company
+- Showroom / Mall Operator
+- Retail Shop or Retail Chain
+- Hospital
+- Elderly Care Provider
+- Restaurant Kitchen, Service & Operations
+
+Each organization’s industry must be one of these seven (or multiple selections only among the seven if the tenant spans more than one). Out-of-scope industries such as security agency or logistics-as-industry are not supported as organization industries.
 
 Each organization should feel like it owns its own private version of the platform.
 
@@ -67,9 +69,9 @@ Imagine these companies use the platform:
 
 ABC Hospital
 
-XYZ Logistics
+Sunrise Manufacturing
 
-Fast Delivery Pvt Ltd
+City Bites Restaurant
 
 All three use the same website.
 
@@ -77,15 +79,15 @@ However,
 
 ABC Hospital should never see
 
-- XYZ workers
+- Sunrise workers
 
 or
 
-- XYZ attendance
+- Sunrise attendance
 
 or
 
-- XYZ payroll
+- Sunrise payroll
 
 The system therefore operates as:
 
@@ -153,39 +155,23 @@ Hiring Begins
 
 # Organization Types
 
-Supported examples:
+Organization industry must map to one (or more, only among) of the seven Master Data industries:
 
-Factory
+- construction
+- manufacturing
+- showroom
+- retail
+- hospital
+- elderly-care
+- restaurant
 
-Hospital
+Operational labels (for display) may refine the type—for example Factory under manufacturing, Mall under showroom, Care Home under elderly-care—but must not introduce a new top-level industry.
 
-Warehouse
+Future (still constrained to the seven industries):
 
-Retail
+Staffing Agency (placing workers into the seven industries)
 
-Hospitality
-
-Construction
-
-Facility Management
-
-Security
-
-Domestic Services
-
-Education
-
-Healthcare
-
-Government Contractor
-
-Future:
-
-NGO
-
-Staffing Agency
-
-Training Institute
+Training Institute (skills for the seven industries)
 
 ---
 
@@ -234,13 +220,15 @@ Each branch may have multiple sites.
 Basic Information
 
 - Organization Name
-- Industry
+- Industry (industryId — required; one of the seven, or a list of industryIds only from the seven)
 - Registration Number
 - GST (optional for MVP)
 - Company Logo
 - Contact Details
 - Website
 - Description
+
+Do not store free-text industry. Resolve names from Master Data.
 
 ---
 
@@ -282,7 +270,13 @@ Verification is managed by administrators.
 
 # Departments
 
-Organizations may create:
+Distinguish two concepts:
+
+1. **Taxonomy departments** (Master Data) — part of Industry → Department → Role used on jobs and candidate preferences (for example Kitchen under restaurant, Nursing under hospital). Owned by Master Data, not created ad hoc by employers as industry substitutes.
+
+2. **Organization departments** — internal units for reporting and permissions within a tenant.
+
+Organizations may create operational units such as:
 
 Human Resources
 
@@ -294,13 +288,15 @@ Sales
 
 Maintenance
 
-Security
-
-Care Services
-
 Administration
 
-Departments improve reporting and permission management.
+Nursing Floor (hospital)
+
+Kitchen / Service (restaurant)
+
+Care Unit (elderly-care)
+
+Do not model out-of-scope peer modules (for example a standalone “Care Economy” org type). Hospital and elderly-care cover care-related hiring and workforce needs.
 
 ---
 
@@ -308,15 +304,21 @@ Departments improve reporting and permission management.
 
 Examples:
 
-Factory 1
+Factory 1 (manufacturing)
 
-Warehouse A
+Production Floor Warehouse Bay (manufacturing location, not a platform industry)
 
-Hospital Wing B
+Hospital Wing B (hospital)
 
-Retail Store 12
+Retail Store 12 (retail)
 
-Construction Site 5
+Showroom Floor A (showroom)
+
+Construction Site 5 (construction)
+
+Restaurant Outlet 3 (restaurant)
+
+Care Home Unit 2 (elderly-care)
 
 Every employee should be assigned to a location.
 
@@ -425,7 +427,9 @@ organizations/
 
         slug
 
-        industry
+        industryId
+
+        industryIds
 
         verificationStatus
 
@@ -439,6 +443,8 @@ organizations/
 
         updatedAt
 ```
+
+`industryId` is the primary industry. Optional `industryIds` may list additional industries only from the seven supported values. Both must validate against Master Data `industries`.
 
 ---
 
@@ -801,6 +807,8 @@ Authentication
 
 Profiles
 
+Master Data (`industries` — and taxonomy departments/roles when posting jobs)
+
 Provides data to:
 
 Jobs
@@ -831,6 +839,8 @@ Every business query must first answer:
 
 If that question cannot be answered confidently, the data model or security model is incomplete.
 
+Organization industry must be constrained to the seven Master Data industries. Taxonomy departments/roles for jobs come from Master Data; org departments are for internal structure only.
+
 Never rely on the frontend to enforce organization boundaries. Every Firestore rule, Cloud Function, and query should validate organization ownership.
 
 As the platform grows to support hundreds or thousands of companies, this discipline will ensure data isolation, simplify compliance, and enable future SaaS subscription models without major architectural changes.
@@ -840,9 +850,10 @@ As the platform grows to support hundreds or thousands of companies, this discip
 # Key Takeaways
 
 - Organizations are tenants, not just company profiles.
+- Organization industry is always one of the seven supported industries (multi-industry only among those seven).
 - Every piece of business data belongs to exactly one organization.
 - Membership is modeled separately to support scalability and future multi-organization users.
-- Departments, branches, and locations provide the operational hierarchy for workforce management.
+- Org departments, branches, and locations provide operational hierarchy; job taxonomy departments come from Master Data.
 - Strong organization boundaries are the foundation of security, reporting, and scalability.
 
 ---

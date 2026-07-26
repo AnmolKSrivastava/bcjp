@@ -23,19 +23,7 @@ import {
   unsaveJob
 } from "@/features/profile/services/applicationService";
 import { USER_ROLES } from "@/utils/constants";
-
-const TITLE_LABELS = {
-  Electrician: { en: "Electrician", hi: "इलेक्ट्रिशियन" },
-  Plumber: { en: "Plumber", hi: "प्लंबर" },
-  Driver: { en: "Driver", hi: "ड्राइवर" },
-  "Delivery Executive": { en: "Delivery Executive", hi: "डिलीवरी एग्जीक्यूटिव" },
-  "Security Guard": { en: "Security Guard", hi: "सिक्योरिटी गार्ड" },
-  "Factory Worker": { en: "Factory Worker", hi: "फैक्ट्री वर्कर" },
-  Welder: { en: "Welder", hi: "वेल्डर" },
-  Housekeeping: { en: "Housekeeping", hi: "हाउसकीपिंग" },
-  Cook: { en: "Cook", hi: "रसोइया" },
-  Other: { en: "Other", hi: "अन्य" }
-};
+import { displayIndustryLabel, displayRoleLabel } from "@/features/taxonomy";
 
 const TYPE_LABELS = {
   "Full Time": { en: "Full Time", hi: "पूर्णकालिक" },
@@ -44,17 +32,15 @@ const TYPE_LABELS = {
   "Daily Wage": { en: "Daily Wage", hi: "दैनिक मजदूरी" }
 };
 
-const JOB_VISUALS = {
-  Electrician: { icon: "⚡", color: "#FEF3C7" },
-  Plumber: { icon: "🔧", color: "#DBEAFE" },
-  Driver: { icon: "🚗", color: "#D1FAE5" },
-  "Delivery Executive": { icon: "🚴", color: "#DBEAFE" },
-  "Security Guard": { icon: "🛡️", color: "#EDE9FE" },
-  "Factory Worker": { icon: "🏭", color: "#FEF3C7" },
-  Welder: { icon: "🔩", color: "#EDE9FE" },
-  Housekeeping: { icon: "🧹", color: "#D1FAE5" },
-  Cook: { icon: "👨‍🍳", color: "#FFEDD5" },
-  Other: { icon: "💼", color: "#F1F5F9" }
+const INDUSTRY_VISUALS = {
+  construction: { icon: "🏗️", color: "#FEF3C7" },
+  manufacturing: { icon: "🏭", color: "#FEE2E2" },
+  showroom: { icon: "🏬", color: "#DBEAFE" },
+  retail: { icon: "🛒", color: "#FCE7F3" },
+  hospital: { icon: "🏥", color: "#D1FAE5" },
+  "elderly-care": { icon: "💙", color: "#EDE9FE" },
+  restaurant: { icon: "🍽️", color: "#FFEDD5" },
+  legacy: { icon: "💼", color: "#F1F5F9" }
 };
 
 const t = {
@@ -114,16 +100,15 @@ const t = {
   }
 };
 
-function jobTitleLabel(title, lang) {
-  return TITLE_LABELS[title]?.[lang] ?? title;
-}
-
 function jobTypeLabel(type, lang) {
   return TYPE_LABELS[type]?.[lang] ?? type;
 }
 
-function jobVisual(title) {
-  return JOB_VISUALS[title] ?? JOB_VISUALS.Other;
+function jobVisual(job) {
+  if (job?.industryId && INDUSTRY_VISUALS[job.industryId]) {
+    return INDUSTRY_VISUALS[job.industryId];
+  }
+  return INDUSTRY_VISUALS.legacy;
 }
 
 function formatSalary(job) {
@@ -262,7 +247,7 @@ function JobDetailsPage({ lang = "en", onLoginClick, onCreateProfileClick }) {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const title = job ? `${jobTitleLabel(job.title, lang)} · ${job.organizationName}` : "Bharat Gig";
+    const title = job ? `${displayRoleLabel(job, lang)} · ${job.organizationName}` : "Bharat Gig";
     try {
       if (navigator.share) {
         await navigator.share({ title, url });
@@ -308,7 +293,7 @@ function JobDetailsPage({ lang = "en", onLoginClick, onCreateProfileClick }) {
     );
   }
 
-  const visual = jobVisual(job.title);
+  const visual = jobVisual(job);
   const closed = job.status !== "open";
   const skills = Array.isArray(job.skills) ? job.skills : [];
 
@@ -340,7 +325,13 @@ function JobDetailsPage({ lang = "en", onLoginClick, onCreateProfileClick }) {
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-extrabold text-[#0F172A] sm:text-3xl">
-                {jobTitleLabel(job.title, lang)}
+                {displayRoleLabel(job, lang)}
+                {displayIndustryLabel(job, lang) ? (
+                  <span className="mt-1 block text-base font-semibold text-[#64748B]">
+                    {displayIndustryLabel(job, lang)}
+                    {job.departmentName ? ` · ${job.departmentName}` : ""}
+                  </span>
+                ) : null}
               </h1>
               <p className="mt-1 text-base text-[#64748B]">{job.organizationName}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">

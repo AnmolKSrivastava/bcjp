@@ -122,7 +122,11 @@ users/
 
 employees/
 
+industries/
+
 departments/
+
+jobRoles/
 
 branches/
 
@@ -151,6 +155,102 @@ reports/
 systemSettings/
 
 Each business domain owns its data.
+
+---
+
+# Platform Taxonomy (Master Data)
+
+Bharat Gig uses a fixed **Industry → Department → Role** hierarchy as platform-wide reference data. Jobs, candidate profiles, applications, and analytics reference these masters by ID — never by free-text labels.
+
+## Canonical Industries
+
+The `industries/` collection contains exactly seven documents:
+
+```
+construction
+
+manufacturing
+
+showroom
+
+retail
+
+hospital
+
+elderly-care
+
+restaurant
+```
+
+## Taxonomy Collections
+
+```
+industries/
+
+departments/        # platform taxonomy departments (scoped to industryId)
+
+jobRoles/           # platform job roles (scoped to departmentId)
+```
+
+Example hierarchy:
+
+```
+Industry: construction
+    Department: electrical
+        Role: electrician
+
+Industry: restaurant
+    Department: kitchen
+        Role: chef
+```
+
+## Job Document (Taxonomy Fields)
+
+Every job and application-linked posting should store:
+
+```
+industryId
+
+industryName        # denormalized for display
+
+departmentId
+
+departmentName
+
+roleId
+
+roleName
+
+experience
+
+salary
+
+city
+
+state
+
+employmentType
+
+shift
+
+genderPreference
+
+languages
+
+skills
+
+status
+```
+
+Use IDs for queries and filters; denormalize names only for read optimization.
+
+## Validation Rules
+
+- Every `departmentId` must reference a department whose `industryId` matches the job's `industryId`.
+- Every `roleId` must reference a job role whose `departmentId` matches the job's `departmentId`.
+- Invalid hierarchy combinations must be rejected at Cloud Functions and Firestore Security Rules.
+
+Platform administrators manage industries (rarely), departments, and roles — not arbitrary job categories.
 
 ---
 
@@ -265,7 +365,9 @@ employees/
 
         branchId
 
-        designation
+        jobRoleId
+
+        industryId
 
         reportingManager
 
@@ -468,7 +570,11 @@ Duplicate only stable information.
 
 Good candidates:
 
+Industry Name
+
 Department Name
+
+Role Name
 
 Organization Name
 
@@ -525,6 +631,10 @@ Organization + Date
 Employee + Date
 
 Department + Status
+
+industryId + status
+
+industryId + departmentId + roleId
 
 Payroll Month + Organization
 
@@ -753,7 +863,11 @@ users/
 
 employees/
 
+industries/
+
 departments/
+
+jobRoles/
 
 branches/
 
@@ -1016,6 +1130,7 @@ Schema evolution should be deliberate, incremental, and fully documented.
 
 - Firestore is the operational database optimized for real-time, serverless, multi-tenant workloads.
 - Data structures prioritize scalability, security, and efficient querying while remaining compatible with offline synchronization.
+- Platform taxonomy (Industry → Department → Role) is shared master data referenced by ID across jobs, profiles, and analytics.
 - Tenant isolation, auditability, indexing, and validation are fundamental database design principles.
 - The schema is designed for long-term evolution, allowing future analytics and search platforms to be introduced without disrupting operational workloads.
 - The database architecture supports every platform capability while remaining aligned with Firebase-first engineering principles.

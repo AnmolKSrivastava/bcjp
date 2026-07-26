@@ -1,29 +1,31 @@
 import multilingualSection from "./Multilingual_Section.webp";
-import deliveryAgent from "./Delivery Agent.webp";
-import driver from "./Driver.webp";
-import electrician from "./Electrician.webp";
-import factoryWorker from "./Factory Worker.webp";
-import housekeeping from "./Housekeeping.webp";
-import plumber from "./Plumber.webp";
-import securityGuard from "./Security Guard.webp";
+import constructionWorker from "./Construction_Worker.webp";
+import manufacturingIndustries from "./Manufacturing_Industries.webp";
+import showroomAndMallExecutives from "./Showroom_and_mall_executives.webp";
+import retailShopWorkers from "./Retail_shop_workers.webp";
+import hospitalStaff from "./Hospital_staff.webp";
+import elderlyCare from "./Elderly_Care.webp";
+import restaurantStaff from "./Restaurant_Staff.webp";
+
 const homeImages = {
-  deliveryAgent,
-  driver,
-  electrician,
-  factoryWorker,
-  housekeeping,
   multilingualSection,
-  plumber,
-  securityGuard
+  constructionWorker,
+  manufacturingIndustries,
+  showroomAndMallExecutives,
+  retailShopWorkers,
+  hospitalStaff,
+  elderlyCare,
+  restaurantStaff
 };
+
 export {
-  deliveryAgent,
-  driver,
-  electrician,
-  factoryWorker,
+  constructionWorker,
+  elderlyCare,
   homeImages,
-  housekeeping,
+  hospitalStaff,
+  manufacturingIndustries,
   multilingualSection,
-  plumber,
-  securityGuard
+  restaurantStaff,
+  retailShopWorkers,
+  showroomAndMallExecutives
 };

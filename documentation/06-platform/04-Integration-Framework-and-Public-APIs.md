@@ -328,16 +328,18 @@ Avoid offset pagination for Firestore collections.
 Example:
 
 ```
-department=Engineering
+industryId=restaurant
+
+departmentId=kitchen
+
+roleId=chef
 
 status=Active
 
 branch=Delhi
-
-role=Manager
 ```
 
-Filtering should remain consistent across APIs.
+Job and candidate APIs should filter by `industryId`, `departmentId`, and `roleId` from the platform taxonomy. Filtering should remain consistent across APIs.
 
 ---
 
@@ -365,9 +367,11 @@ Employee ID
 
 Email
 
-Department
+industryId
 
-Job Position
+departmentId
+
+roleId
 
 Organization-specific identifiers
 

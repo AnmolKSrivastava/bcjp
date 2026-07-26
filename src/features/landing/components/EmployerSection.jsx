@@ -68,9 +68,9 @@ function EmployerSection({ lang }) {
   }
                 <div className="space-y-3">
                   {[
-    { name: "Ramesh K.", role: "Electrician", match: "98%", img: homeImages.electrician },
-    { name: "Sunil P.", role: "Plumber", match: "94%", img: homeImages.plumber },
-    { name: "Meena D.", role: "Housekeeping", match: "91%", img: homeImages.housekeeping }
+    { name: "Ramesh K.", role: "Electrician", match: "98%", img: homeImages.constructionWorker },
+    { name: "Sunil P.", role: "Machine Operator", match: "94%", img: homeImages.manufacturingIndustries },
+    { name: "Meena D.", role: "Caregiver", match: "91%", img: homeImages.elderlyCare }
   ].map((c, i) => <div
     key={i}
     className="flex flex-col sm:flex-row sm:items-center gap-3 bg-[#F8FAFC] rounded-xl p-3 border border-[#E2E8F0]"

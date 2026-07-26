@@ -129,6 +129,16 @@ Each layer has clearly defined responsibilities.
 
 ---
 
+# Shared Platform Data
+
+The Industry → Department → Role taxonomy is **shared reference data** across all tenants. Collections `industries/`, taxonomy `departments/`, and `jobRoles/` are read by every module that posts jobs, builds profiles, filters search, scores candidates, or aggregates analytics.
+
+Seven canonical industries: construction, manufacturing, showroom, retail, hospital, elderly-care, restaurant.
+
+This data is seeded at platform launch, cached aggressively (PWA and CDN), and managed by platform administrators — not by individual organizations.
+
+---
+
 # Presentation Layer
 
 Technology:
@@ -527,6 +537,8 @@ Avoid mixing responsibilities.
 Use caching for:
 
 Static Assets
+
+Platform Taxonomy (industries, departments, jobRoles)
 
 Master Data
 

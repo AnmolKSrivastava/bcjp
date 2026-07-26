@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router";
+import { Routes, Route, useNavigate, useSearchParams } from "react-router";
 import { AnimatePresence } from "motion/react";
 import { LanguageModal } from "@/shared/common/LanguageModal";
 import { LoginModal, RoleSelectionModal, useAuth } from "@/features/auth";
@@ -7,6 +7,7 @@ import { RECAPTCHA_CONTAINER_ID } from "@/features/auth/hooks/usePhoneAuth";
 import { CreateProfileModal, WorkerDashboard } from "@/features/profile";
 import { CreateCompanyModal, PostJobModal, EmployerDashboard } from "@/features/employer";
 import { JobDetailsPage } from "@/features/jobs";
+import { IndustryDetailPage } from "@/features/industries";
 import { Navbar } from "@/shared/layout/Navbar";
 import { Footer } from "@/shared/layout/Footer";
 import { HeroSection } from "@/features/landing/components/HeroSection";
@@ -27,9 +28,27 @@ function LandingPage({
   setJobBrowseMode,
   onLoginClick
 }) {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const industryFilter = searchParams.get("industry");
+  const departmentFilter = searchParams.get("department");
+  const roleFilter = searchParams.get("role");
+
+  useEffect(() => {
+    if (industryFilter || departmentFilter || roleFilter || window.location.hash === "#jobs") {
+      document.getElementById("jobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [industryFilter, departmentFilter, roleFilter]);
+
   const scrollToJobs = (mode) => {
     setJobBrowseMode(mode);
     document.getElementById("jobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const handleIndustryClick = (industryId) => {
+    navigate(`/industries/${industryId}`);
+  };
+  const clearJobFilters = () => {
+    setSearchParams({});
   };
   return (
     <>
@@ -40,13 +59,18 @@ function LandingPage({
           onPostJobClick={onPostJobClick}
           onBrowseJobsClick={() => scrollToJobs("type")}
           onVoiceBrowseClick={() => scrollToJobs("voice")}
+          onIndustryClick={handleIndustryClick}
         />
         <HowItWorks lang={lang} />
-        <JobCategories lang={lang} />
+        <JobCategories lang={lang} onIndustryClick={handleIndustryClick} />
         <FeaturedJobs
           lang={lang}
           browseMode={jobBrowseMode}
           onBrowseModeHandled={() => setJobBrowseMode(null)}
+          industryFilter={industryFilter}
+          departmentFilter={departmentFilter}
+          roleFilter={roleFilter}
+          onClearIndustryFilter={clearJobFilters}
           onLoginClick={onLoginClick}
           onCreateProfileClick={onCreateProfileClick}
         />
@@ -200,6 +224,10 @@ function App() {
                   onLoginClick={() => setLoginOpen(true)}
                 />
               }
+            />
+            <Route
+              path="/industries/:industryId"
+              element={<IndustryDetailPage lang={activeLang} />}
             />
             <Route
               path="/employer/dashboard"

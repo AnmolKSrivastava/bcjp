@@ -54,10 +54,12 @@ Documents             Payroll             Platform Settings
 
 Notifications         Scheduling          Analytics
 
-AI                    Care Economy        Monitoring
+AI                    Master Data         Monitoring
 ```
 
 Although the platform appears as a single application to users, internally it is composed of independent modules.
+
+Hospital and elderly-care hiring needs live inside the seven-industry taxonomy (Jobs, Profiles, Organizations)—not as a separate peer “Care Economy” platform module.
 
 ---
 
@@ -208,6 +210,7 @@ Responsibilities
 - Experience
 - Documents
 - Languages
+- Preferred Industry / Department / Role (taxonomy IDs)
 - Profile Completion
 
 Firebase
@@ -234,7 +237,9 @@ Responsibilities
 
 Organization
 
-Departments
+Industry (one of the seven, or multi-industry only among the seven)
+
+Org Departments (operational)
 
 Branches
 
@@ -256,15 +261,15 @@ Job Marketplace
 
 Purpose
 
-Connect workers with employers.
+Connect workers with employers within the seven-industry taxonomy.
 
 Responsibilities
 
-Job Posting
+Job Posting (cascading Industry → Department → Role)
 
 Search
 
-Filtering
+Filtering (Industry, Department, Role, City, Experience, Salary, Shift, Employment Type, Language, Skills)
 
 Recommendations
 
@@ -586,27 +591,27 @@ Priority
 
 ## Module 15
 
-Care Economy
+Master Data
 
 Purpose
 
-Healthcare-specific workflows.
+Own the platform’s shared taxonomy and reference values.
 
 Responsibilities
 
-Caregiver Matching
+- `industries` (exactly seven: construction, manufacturing, showroom, retail, hospital, elderly-care, restaurant)
+- `departments` (each belongs to one industry)
+- `jobRoles` (each belongs to one department)
+- Employment types, shifts, skills, languages, and other reference lists
+- Admin-managed extensions of departments and roles (industries change rarely)
 
-Medical Certifications
+Jobs, Profiles, Organizations, Search, Resume Builder, AI, and Analytics all consume this module. No free-text industry and no flat “Job Category” as an industry substitute.
 
-Patient Assignment
-
-Emergency SOS
-
-Visit Tracking
+Care-related roles (nurses, caregivers, patient attendants, etc.) are modeled under `hospital` and `elderly-care` industries—not as a separate Care Economy module.
 
 Priority
 
-★★★★☆
+★★★★★
 
 ---
 
@@ -630,6 +635,8 @@ Settings
 
 Audit Logs
 
+Master Data administration (industries, departments, roles)
+
 Priority
 
 ★★★★★
@@ -640,6 +647,9 @@ Priority
 
 ```
 Authentication
+      │
+      ▼
+Master Data
       │
       ▼
 Profiles
@@ -678,11 +688,9 @@ AI
 Analytics
 
 Administration
-
-Care Economy
 ```
 
-These modules integrate with multiple business modules.
+These modules integrate with multiple business modules. Master Data is a prerequisite for Profiles, Organizations, and Jobs because of the Industry → Department → Role hierarchy.
 
 ---
 
@@ -693,6 +701,8 @@ Not every module should be built immediately.
 ## Phase 1
 
 Authentication
+
+Master Data (seven industries, departments, jobRoles)
 
 Profiles
 
@@ -734,8 +744,6 @@ Admin Portal
 
 ## Phase 4
 
-Care Economy
-
 Training
 
 Learning
@@ -744,6 +752,8 @@ Finance
 
 Third-party Integrations
 
+(Hospital and elderly-care deep workflows, if any, extend industry-specific features inside Jobs/Profiles/Attendance—not a separate Care Economy module.)
+
 ---
 
 # Recommended Firebase Mapping
@@ -751,6 +761,7 @@ Third-party Integrations
 | Module | Firebase Services |
 |---------|------------------|
 | Authentication | Firebase Authentication |
+| Master Data | Firestore (`industries`, `departments`, `jobRoles`, other refs) |
 | Profiles | Firestore + Storage |
 | Organizations | Firestore |
 | Jobs | Firestore |
@@ -812,6 +823,8 @@ Keeping module boundaries clean today will make scaling, testing, and future ref
 
 - The platform is divided into business modules rather than pages.
 - Each module has a single responsibility and clear ownership.
+- Master Data owns the seven-industry taxonomy (`industries` → `departments` → `jobRoles`); Jobs and Profiles require those IDs.
+- Hospital and elderly-care are industries inside that taxonomy, not a peer Care Economy module.
 - Firebase provides sufficient capabilities for the MVP without introducing unnecessary infrastructure complexity.
 - The module dependency graph defines the recommended implementation order.
 - This chapter serves as the architectural foundation for all subsequent module-specific documentation.

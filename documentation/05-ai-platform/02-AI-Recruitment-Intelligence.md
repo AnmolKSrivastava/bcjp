@@ -152,10 +152,21 @@ Summaries help recruiters review candidates faster.
 
 Inputs:
 
+- Job Taxonomy (industryId, departmentId, roleId)
 - Job Description
 - Required Skills
 - Preferred Skills
-- Candidate Profile
+- Candidate Profile (preferred industry, department, role)
+
+Matching priority (strongest signal first):
+
+1. Industry Match
+2. Department Match
+3. Role Match
+4. Skills
+5. Experience
+6. City
+7. Salary
 
 Outputs:
 
@@ -165,7 +176,7 @@ Outputs:
 - Missing Skills
 - Recommendation
 
-The score should always include an explanation.
+The score should always include an explanation referencing taxonomy alignment and qualification gaps.
 
 ---
 
@@ -173,6 +184,9 @@ The score should always include an explanation.
 
 AI ranks candidates based on:
 
+- Industry Match
+- Department Match
+- Role Match
 - Skills
 - Experience
 - Certifications
@@ -181,7 +195,7 @@ AI ranks candidates based on:
 - Availability
 - Previous Hiring Outcomes (future)
 
-Ranking is advisory only.
+Industry alignment is the strongest ranking signal. Ranking is advisory only.
 
 ---
 
@@ -215,7 +229,9 @@ Recommend interview questions around inventory systems.
 Recruiters provide:
 
 - Job Title
-- Department
+- Industry (from taxonomy)
+- Department (from taxonomy)
+- Role (from taxonomy)
 - Responsibilities
 - Experience
 
@@ -538,6 +554,7 @@ Future versions may incorporate historical hiring outcomes to improve recommenda
 - AI accelerates recruitment without replacing recruiters.
 - Every recommendation is explainable and editable.
 - Resume parsing creates structured candidate data for downstream workflows.
+- Candidate matching prioritizes Industry → Department → Role alignment, then skills, experience, city, and salary.
 - Candidate matching focuses on qualifications rather than protected characteristics.
 - The module is built on the shared AI Services Layer, ensuring consistency and future extensibility.
 

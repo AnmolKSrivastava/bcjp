@@ -12,13 +12,25 @@
 
 # 1. Introduction
 
-The Workforce Management Platform is a cloud-based digital ecosystem designed to simplify and modernize the complete employment lifecycle for India's blue-collar, grey-collar, and care-economy workforce.
+Bharat Gig is a specialized hiring and workforce platform for India's frontline workers — focused on **seven employment industries only**, not an unlimited multi-industry marketplace.
 
-Unlike traditional job portals that stop after connecting employers with candidates, this platform manages the entire journey—from worker registration to payroll processing.
+The seven supported industries are:
 
-It combines recruitment, onboarding, attendance, payroll, communication, compliance, and workforce analytics into a single unified platform.
+1. Construction Workers
+2. Manufacturing Company Workers
+3. Showrooms & Mall Executives
+4. Retail Shop Workers
+5. Hospital Staff
+6. Elderly Care
+7. Restaurant Staff
 
-The long-term vision is to become the operating system for workforce management, enabling businesses of all sizes to recruit, manage, monitor, and retain employees using a single platform.
+Unlike traditional job portals that stop after connecting employers with candidates, this platform manages the employment journey within these industries — from worker registration through hiring, and later attendance, payroll, and analytics.
+
+Every job, profile preference, search filter, and AI recommendation uses the same hierarchy:
+
+**Industry → Department → Role**
+
+The long-term vision is to become the operating system for workforce management **within these seven industries**, enabling employers in those verticals to recruit, manage, monitor, and retain workers on a single platform.
 
 ---
 
@@ -125,20 +137,15 @@ The platform serves multiple types of users.
 
 Workers create profiles, verify identities, apply for jobs, record attendance, receive notifications, and manage employment records.
 
-Examples include:
+Examples (within the seven industries) include:
 
-- Factory workers
-- Warehouse staff
-- Delivery executives
-- Retail employees
-- Electricians
-- Plumbers
-- Security guards
-- Drivers
-- Housekeeping staff
-- Caregivers
-- Nurses
-- Domestic workers
+- Construction electricians, plumbers, welders, helpers
+- Manufacturing production, assembly, warehouse, and QC staff
+- Showroom sales, cashier, and floor executives
+- Retail shop assistants, inventory, and counter staff
+- Hospital nurses, ward boys, lab staff, and housekeeping
+- Elderly-care caregivers, home nurses, and companions
+- Restaurant cooks, waiters, captains, and kitchen helpers
 
 ---
 
@@ -192,15 +199,15 @@ The platform consists of several integrated modules.
 | Authentication | Secure user registration and login |
 | Worker Profiles | Digital worker identity |
 | Employer Portal | Workforce management |
-| Job Marketplace | Job posting and applications |
-| AI Resume Builder | Resume creation using voice input |
-| Candidate Matching | Intelligent employer recommendations |
+| Job Marketplace | Job posting and applications within the seven industries |
+| Industry Taxonomy | Master data: industries, departments, job roles |
+| AI Resume Builder | Voice/guided resume creation using Industry → Department → Role |
+| Candidate Matching | Matching prioritized by industry, department, then role |
 | Attendance | GPS-based attendance tracking |
 | Payroll | Salary calculation and payments |
 | Notifications | Real-time communication |
-| Care Economy | Specialized caregiver workflows |
-| Analytics | Operational reporting |
-| Administration | Platform management |
+| Analytics | Reporting by industry, department, and role |
+| Administration | Platform and taxonomy management |
 
 Each module is designed to operate independently while sharing a common data model.
 
@@ -278,11 +285,11 @@ Salary processing and financial reporting.
 
 Identity verification, documentation, and regulatory tracking.
 
-## Care Economy
+## Industry Taxonomy
 
-Managing healthcare and caregiver-specific workflows.
+Standardizing every job and preference as Industry → Department → Role across the seven supported industries (including Hospital Staff and Elderly Care as distinct industries, not a separate product line).
 
-Each domain can eventually evolve into an independent service while remaining part of the same ecosystem.
+Each domain can eventually deepen within the seven industries while remaining part of the same ecosystem.
 
 ---
 
@@ -333,10 +340,10 @@ This handbook explains *how* those requirements should be implemented using the 
 
 After reading this chapter, every developer should understand:
 
-- The platform is **not** a job portal.
-- Recruitment is only one stage of the employment lifecycle.
-- The platform integrates recruitment, HR, attendance, payroll, compliance, and analytics into a single system.
-- Every module exists to support a continuous workforce management process.
-- The Firebase + Next.js architecture recommended in this handbook is an implementation strategy that fulfills the business goals defined in the original BRD and TDD while reducing infrastructure complexity for the initial product release.
+- Bharat Gig is a **specialized seven-industry** hiring and workforce platform — not an unlimited category marketplace.
+- Every job and preference follows **Industry → Department → Role**.
+- The platform is more than a job portal; recruitment is one stage of a longer employment lifecycle.
+- Modules share one taxonomy and one data model across hiring, HR, attendance, payroll, compliance, and analytics.
+- The Firebase architecture recommended in this handbook implements that specialized product scope.
 
 ---

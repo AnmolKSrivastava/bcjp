@@ -146,11 +146,13 @@ Initial capabilities include:
 - Summarization
 - Classification
 - Ranking
-- Matching
+- Matching (using industryId, departmentId, roleId taxonomy alignment)
 - Recommendation
 - Extraction
 - Translation
 - Question Answering
+
+Candidate and job matching must prioritize taxonomy IDs (Industry → Department → Role) before skills, experience, city, and salary.
 
 Future capabilities:
 

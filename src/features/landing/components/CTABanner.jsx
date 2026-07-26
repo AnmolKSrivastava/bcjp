@@ -69,8 +69,8 @@ function CTABanner({ lang, onCreateProfileClick }) {
   >
             <div className="relative rounded-3xl overflow-hidden h-80 shadow-2xl">
               <img
-    src={homeImages.electrician}
-    alt="Indian electrician with mobile phone smiling"
+    src={homeImages.constructionWorker}
+    alt="Construction worker using Bharat Gig"
     className="w-full h-full object-cover"
   />
               <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent" />

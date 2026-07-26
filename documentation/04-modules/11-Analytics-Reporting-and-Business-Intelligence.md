@@ -28,7 +28,7 @@ Analytics should become the executive decision-making layer of the platform.
 Organizations require visibility into:
 
 - Workforce Size
-- Hiring Performance
+- Hiring Performance by Industry, Department, and Role
 - Attendance Trends
 - Leave Trends
 - Payroll Cost
@@ -111,6 +111,12 @@ KPIs:
 - Offer Acceptance Rate
 - Candidate Source Analysis
 - AI Match Accuracy
+- Top Hiring Industry
+- Top Department
+- Most Demanded Role
+- Applications per Industry
+- Salary Distribution per Industry
+- Hiring Trend by Industry
 
 Charts:
 
@@ -118,6 +124,23 @@ Charts:
 - Weekly Applications
 - Hiring Trend
 - Candidate Sources
+- Industry Comparison
+- Role Demand Trend
+
+---
+
+# Industry & Taxonomy Analytics
+
+Aggregate recruitment and workforce metrics by platform taxonomy:
+
+- Applications per Industry
+- Hires per Department
+- Open Positions by Role
+- Time-to-Hire by Industry
+- Salary Distribution by Industry and Role
+- Candidate Supply vs Demand by Industry
+
+These dimensions use `industryId`, `departmentId`, and `roleId` — not free-text categories.
 
 ---
 
@@ -357,7 +380,9 @@ Future:
 Managers should filter by:
 
 - Date Range
+- Industry
 - Department
+- Role
 - Branch
 - Employee
 - Shift
@@ -470,6 +495,10 @@ Examples:
 organizationId + date
 
 organizationId + departmentId
+
+organizationId + industryId
+
+organizationId + industryId + departmentId + roleId
 
 organizationId + branchId
 
@@ -627,6 +656,7 @@ This event-driven design keeps analytics scalable and prevents reporting from sl
 - Analytics is a consumer of operational events, not an owner of business data.
 - Dashboards should rely on precomputed metrics for speed and scalability.
 - Reporting should support multiple export formats and role-based access.
+- Analytics aggregates by Industry, Department, and Role using platform taxonomy IDs.
 - The architecture is event-driven and ready for future AI and BigQuery integration.
 - Analytics provides the decision-making layer for the entire platform.
 

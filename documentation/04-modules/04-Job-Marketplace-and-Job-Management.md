@@ -125,10 +125,24 @@ The job status controls user visibility and business rules.
 
 # Job Ownership
 
-Every job belongs to exactly one organization.
+Every job belongs to exactly one organization and must also sit in the platform taxonomy.
 
 ```
 Organization
+
+↓
+
+Branch / Location
+
+↓
+
+Job
+```
+
+Taxonomy (required on every job; independent of org structure):
+
+```
+Industry
 
 ↓
 
@@ -136,20 +150,46 @@ Department
 
 ↓
 
-Location
-
-↓
-
-Job
+Role
 ```
 
 Only authorized members of the organization may modify the job.
 
 ---
 
+# Industry Taxonomy
+
+Bharat Gig supports exactly seven industries. Every job must reference IDs from Master Data—no free-text industry and no flat “Job Category” as a substitute.
+
+Supported industry IDs:
+
+- `construction`
+- `manufacturing`
+- `showroom`
+- `retail`
+- `hospital`
+- `elderly-care`
+- `restaurant`
+
+Hierarchy:
+
+```
+Industry → Department → Role
+```
+
+Example:
+
+```
+restaurant → Kitchen → Chef
+```
+
+Employment type (full-time, daily wage, etc.) is separate from taxonomy and must not be used as an industry substitute.
+
+---
+
 # Job Types
 
-Supported types:
+Supported types (employment classification only):
 
 - Full-Time
 - Part-Time
@@ -161,7 +201,7 @@ Supported types:
 - Seasonal
 - Freelance
 
-Reference values come from Master Data.
+Reference values come from Master Data. These values describe how the worker is paid/engaged, not which industry they work in.
 
 ---
 
@@ -184,14 +224,19 @@ Future:
 
 Every job contains:
 
+Taxonomy (required IDs + denormalized names)
+
+- industryId / industryName
+- departmentId / departmentName
+- roleId / roleName
+
 Basic Information
 
 - Job Title
-- Job Category
-- Department
 - Organization
 - Branch
 - Work Location
+- City / State
 
 Employment
 
@@ -214,6 +259,8 @@ Requirements
 - Experience
 - Education
 - Certifications
+- Languages
+- Gender Preference (optional)
 
 Hiring
 
@@ -227,6 +274,30 @@ Visibility
 - Public
 - Internal
 - Invitation Only
+
+---
+
+# Employer Job Post Flow
+
+Employers must not type industries or invent categories.
+
+Use cascading dropdowns driven by Master Data:
+
+```
+Industry
+
+↓
+
+Department (filtered by industry)
+
+↓
+
+Role (filtered by department)
+```
+
+Then collect salary, city, shift, employment type, skills, and other fields.
+
+Invalid combinations (role not under selected department, department not under industry) must be rejected on save.
 
 ---
 
@@ -303,7 +374,9 @@ One job may recruit for multiple locations.
 Example:
 
 ```
-Security Guard
+Industry: hospital
+Department: Nursing
+Role: Staff Nurse
 
 ↓
 
@@ -353,19 +426,43 @@ jobs/
 
         organizationId
 
+        industryId
+
+        industryName
+
         departmentId
+
+        departmentName
+
+        roleId
+
+        roleName
 
         title
 
         description
 
-        employmentType
-
-        status
+        experience
 
         salaryMin
 
         salaryMax
+
+        city
+
+        state
+
+        employmentType
+
+        shift
+
+        genderPreference
+
+        languages
+
+        skills
+
+        status
 
         openings
 
@@ -379,6 +476,8 @@ jobs/
 
         updatedAt
 ```
+
+`industryId`, `departmentId`, and `roleId` are required and must resolve to Master Data. Names are denormalized for display and search. Do not store free-text industry in place of IDs.
 
 ---
 
@@ -458,17 +557,25 @@ Future AI recommendations can use this behavior.
 
 # Search Experience
 
-Workers should search using:
+Workers should filter and search using:
 
-- Job Title
-- Skill
 - Industry
-- Salary
+- Department
+- Role
+- City
 - Experience
-- Location
+- Salary
 - Shift
 - Employment Type
+- Language
+- Skills
+
+Optional supporting filters:
+
+- Job Title
 - Organization
+
+Industry, Department, and Role filters should cascade (same hierarchy as posting). Filters for unsupported industries or legacy flat categories must not appear.
 
 Filters should be combinable.
 
@@ -480,30 +587,38 @@ Employers may describe a job in natural language.
 
 Example:
 
-> "Need 20 security guards for a warehouse in Patna, night shift."
+> "Need 5 staff nurses for night shift at our Patna hospital, full-time."
 
-AI should extract:
+AI should extract and map to taxonomy:
 
+- industryId / departmentId / roleId (within the seven industries)
 - Title
 - Skills
 - Shift
+- Employment Type
 - Openings
-- Location
+- City / Location
 - Suggested Salary
 - Certifications
 
-The employer reviews and edits before publishing.
+The employer reviews cascading dropdown selections before publishing. AI must never invent an out-of-scope industry (for example security or logistics as a top-level industry).
 
 ---
 
 # AI Job Recommendations
 
-Recommendations should consider:
+Recommendations should prioritize:
 
-- Skills
-- Experience
-- Preferred Location
-- Expected Salary
+1. Industry match
+2. Department match
+3. Role match
+4. Skills
+5. Experience
+6. City
+7. Salary
+
+Also consider:
+
 - Language
 - Past Applications
 - Saved Jobs
@@ -542,7 +657,7 @@ Each public job page should include:
 Example:
 
 ```
-/jobs/security-guard-patna-abc-hospital
+/jobs/staff-nurse-patna-abc-hospital
 ```
 
 This improves discoverability through search engines.
@@ -703,12 +818,13 @@ Implement the Job Marketplace module using:
 
 Requirements:
 
-- Job CRUD
+- Job CRUD with required industryId, departmentId, roleId
+- Cascading Industry → Department → Role dropdowns on post
 - Draft workflow
 - Publishing lifecycle
 - Multi-location jobs
 - Structured requirements
-- Search & filters
+- Search & filters (Industry, Department, Role, City, Experience, Salary, Shift, Employment Type, Language, Skills)
 - Saved jobs
 - SEO-friendly public job pages
 - Responsive worker and employer interfaces
@@ -722,7 +838,7 @@ Depends on:
 - Authentication
 - Profiles
 - Organization Management
-- Master Data
+- Master Data (`industries`, `departments`, `jobRoles`)
 - Event Architecture
 
 Provides data to:
@@ -742,6 +858,8 @@ This module is the foundation of the Recruitment Engine.
 
 Treat jobs as structured business objects rather than text advertisements.
 
+Every job must store taxonomy IDs from Master Data. Employment type and shift are orthogonal fields—never treat them as industry or category.
+
 Every field should be designed to support:
 
 - Search
@@ -759,8 +877,9 @@ The quality of the Job Marketplace directly influences hiring success, recommend
 # Key Takeaways
 
 - The Job Marketplace is the entry point into the recruitment lifecycle.
+- Every job uses Industry → Department → Role IDs from the seven supported industries.
 - Jobs are structured entities with clear ownership, lifecycle, and relationships.
-- AI should assist both job creation and candidate discovery.
+- AI should assist both job creation and candidate discovery within the taxonomy.
 - Firestore schemas should optimize search, filtering, and scalability.
 - A web-first SEO strategy helps attract workers through search engines while maintaining a responsive mobile experience.
 

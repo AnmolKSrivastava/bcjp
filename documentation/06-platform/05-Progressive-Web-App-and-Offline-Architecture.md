@@ -256,7 +256,11 @@ Employee Profile
 
 Organization Settings
 
-Department List
+industries/
+
+departments/
+
+jobRoles/
 
 Master Data
 

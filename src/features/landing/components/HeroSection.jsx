@@ -33,32 +33,75 @@ const t = {
 };
 const workerImages = [
   {
-    src: homeImages.electrician,
-    alt: "Indian electrician",
-    label: "Electrician",
-    rotate: "-2deg"
+    id: "construction",
+    src: homeImages.constructionWorker,
+    alt: "Construction workers",
+    label: { en: "Construction", hi: "निर्माण" },
+    rotate: "-2deg",
+    span: "top"
   },
   {
-    src: homeImages.housekeeping,
-    alt: "Indian housekeeping professional",
-    label: "Housekeeping",
-    rotate: "2deg"
+    id: "manufacturing",
+    src: homeImages.manufacturingIndustries,
+    alt: "Manufacturing workers",
+    label: { en: "Manufacturing", hi: "मैन्युफैक्चरिंग" },
+    rotate: "1.5deg",
+    span: "top"
   },
   {
-    src: homeImages.driver,
-    alt: "Indian truck driver",
-    label: "Driver",
-    rotate: "-1deg"
+    id: "showroom",
+    src: homeImages.showroomAndMallExecutives,
+    alt: "Showroom and mall executives",
+    label: { en: "Showroom", hi: "शोरूम" },
+    rotate: "-1deg",
+    span: "top"
   },
   {
-    src: homeImages.deliveryAgent,
-    alt: "Indian delivery executive",
-    label: "Delivery",
-    rotate: "1.5deg"
+    id: "retail",
+    src: homeImages.retailShopWorkers,
+    alt: "Retail shop workers",
+    label: { en: "Retail", hi: "रिटेल" },
+    rotate: "2deg",
+    span: "bottom"
+  },
+  {
+    id: "hospital",
+    src: homeImages.hospitalStaff,
+    alt: "Hospital staff",
+    label: { en: "Hospital", hi: "अस्पताल" },
+    rotate: "-1.5deg",
+    span: "bottom"
+  },
+  {
+    id: "elderly-care",
+    src: homeImages.elderlyCare,
+    alt: "Elderly care",
+    label: { en: "Elderly Care", hi: "बुज़ुर्ग देखभाल" },
+    rotate: "1deg",
+    span: "bottom"
+  },
+  {
+    id: "restaurant",
+    src: homeImages.restaurantStaff,
+    alt: "Restaurant staff",
+    label: { en: "Restaurant", hi: "रेस्तरां" },
+    rotate: "-2deg",
+    span: "bottom"
   }
 ];
-function HeroSection({ lang, onCreateProfileClick, onPostJobClick, onBrowseJobsClick, onVoiceBrowseClick }) {
+
+function HeroSection({
+  lang,
+  onCreateProfileClick,
+  onPostJobClick,
+  onBrowseJobsClick,
+  onVoiceBrowseClick,
+  onIndustryClick
+}) {
   const txt = t[lang];
+  const topRow = workerImages.filter((img) => img.span === "top");
+  const bottomRow = workerImages.filter((img) => img.span === "bottom");
+
   return <section
     id="hero"
     className="relative min-h-[calc(100dvh-4rem)] bg-white overflow-hidden flex items-center"
@@ -179,26 +222,54 @@ function HeroSection({ lang, onCreateProfileClick, onPostJobClick, onBrowseJobsC
     initial={{ opacity: 0, x: 30 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-    className="relative min-h-[500px]"
+    className="relative"
   >
-          {
-    /* Worker image collage */
-  }
-          <div className="grid grid-cols-2 gap-3 mb-4 relative z-0">
-            {workerImages.map((img, i) => <div
-    key={i}
-    className="relative rounded-2xl overflow-hidden shadow-lg bg-gray-100"
-    style={{ transform: `rotate(${img.rotate})` }}
-  >
-                <img
-    src={img.src}
-    alt={img.alt}
-    className="w-full h-44 object-cover"
-  />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                  <span className="text-white text-xs font-semibold">{img.label}</span>
-                </div>
-              </div>)}
+          {/* 7 industry cards: 3 on top, 4 on bottom — same card style as before */}
+          <div className="relative z-0 flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+              {topRow.map((img) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => onIndustryClick?.(img.id)}
+                  className="relative rounded-2xl overflow-hidden shadow-lg bg-gray-100 text-left cursor-pointer hover:shadow-xl transition-shadow"
+                  style={{ transform: `rotate(${img.rotate})` }}
+                >
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="w-full h-32 sm:h-40 lg:h-44 object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-3">
+                    <span className="text-white text-[10px] sm:text-xs font-semibold leading-tight">
+                      {img.label[lang] ?? img.label.en}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+              {bottomRow.map((img) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => onIndustryClick?.(img.id)}
+                  className="relative rounded-2xl overflow-hidden shadow-lg bg-gray-100 text-left cursor-pointer hover:shadow-xl transition-shadow"
+                  style={{ transform: `rotate(${img.rotate})` }}
+                >
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="w-full h-32 sm:h-36 lg:h-40 object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-3">
+                    <span className="text-white text-[10px] sm:text-xs font-semibold leading-tight">
+                      {img.label[lang] ?? img.label.en}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>
