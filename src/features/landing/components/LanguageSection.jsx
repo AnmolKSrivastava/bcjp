@@ -2,12 +2,11 @@ import { Mic } from "lucide-react";
 import { motion } from "motion/react";
 import { homeImages } from "@/assets/Home";
 const languages = [
-  { flag: "🇮🇳", name: "हिन्दी", english: "Hindi" },
   { flag: "🇬🇧", name: "English", english: "English" },
+  { flag: "🇮🇳", name: "हिन्दी", english: "Hindi" },
   { flag: "🇮🇳", name: "मराठी", english: "Marathi" },
   { flag: "🇮🇳", name: "বাংলা", english: "Bengali" },
-  { flag: "🇮🇳", name: "தமிழ்", english: "Tamil" },
-  { flag: "🇮🇳", name: "తెలుగు", english: "Telugu" }
+  { flag: "🇮🇳", name: "தமிழ்", english: "Tamil" }
 ];
 function LanguageSection({ lang }) {
   return <section className="bg-white py-20 px-4">

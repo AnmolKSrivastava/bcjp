@@ -34,6 +34,18 @@ function getOpenAIClient() {
  * Map interview Q&A into candidate profile form fields using OpenAI.
  * API key stays on the server — never expose it to the Vite client.
  */
+function extractTaxonomyIdsFromAnswers(answers) {
+  const byId = {};
+  for (const item of answers) {
+    if (item?.id) byId[item.id] = item;
+  }
+  return {
+    industryId: byId.industry?.taxonomyId || null,
+    departmentId: byId.department?.taxonomyId || null,
+    roleId: byId.role?.taxonomyId || null
+  };
+}
+
 async function parseVoiceProfileAnswers({ interviewLanguage, siteLanguage, answers }) {
   if (!Array.isArray(answers) || answers.length === 0) {
     throw new Error("Answers are required.");
@@ -42,12 +54,17 @@ async function parseVoiceProfileAnswers({ interviewLanguage, siteLanguage, answe
   const client = getOpenAIClient();
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const taxonomy = flattenForPrompt();
+  const lockedTaxonomy = extractTaxonomyIdsFromAnswers(answers);
+  const hasLockedPath = Boolean(
+    lockedTaxonomy.industryId && lockedTaxonomy.departmentId && lockedTaxonomy.roleId
+  );
 
   const qaText = answers
     .map((item, index) => {
       const q = item?.question ?? `Question ${index + 1}`;
       const a = item?.answer ?? "";
-      return `Q${index + 1}: ${q}\nA${index + 1}: ${a}`;
+      const idHint = item?.taxonomyId ? ` [taxonomyId=${item.taxonomyId}]` : "";
+      return `Q${index + 1} (${item?.id || "unknown"}): ${q}\nA${index + 1}: ${a}${idHint}`;
     })
     .join("\n\n");
 
@@ -72,16 +89,29 @@ ${JSON.stringify(taxonomy)}
 Rules:
 - Interview language may be English, Hindi, Bengali, Marathi, or Tamil. Understand answers and map to English enum / taxonomy IDs.
 - industryId, departmentId, and roleId MUST form a valid path in the taxonomy above.
+- If Locked taxonomy IDs are provided below, COPY them exactly into industryId/departmentId/roleId — do not change them.
 - Prefer the closest matching role; never invent IDs.
-- If taxonomy is unclear, pick the best available construction / manufacturing / restaurant / hospital / elderly-care / retail / showroom path that fits.
+- If taxonomy is unclear and no locked IDs exist, pick the best available construction / manufacturing / restaurant / hospital / elderly-care / retail / showroom path that fits.
 - If experience is unclear, pick the closest EXPERIENCE option.
 - If availability is unclear, use "Immediate".
 - Always include the interview language in "languages" when it maps to LANGUAGE_OPTIONS.
 - Never invent a fake name; if missing use "".
 - Do not include markdown or extra keys.`;
 
+  const lockedHint = hasLockedPath
+    ? `Locked taxonomy IDs (copy exactly):
+industryId=${lockedTaxonomy.industryId}
+departmentId=${lockedTaxonomy.departmentId}
+roleId=${lockedTaxonomy.roleId}`
+    : `Partial taxonomy hints (use when present):
+industryId=${lockedTaxonomy.industryId || "(unknown)"}
+departmentId=${lockedTaxonomy.departmentId || "(unknown)"}
+roleId=${lockedTaxonomy.roleId || "(unknown)"}`;
+
   const userPrompt = `Site UI language: ${siteLanguage || "en"}
 Interview language: ${interviewLanguage || "en"}
+
+${lockedHint}
 
 Interview transcript:
 ${qaText}`;
@@ -104,7 +134,13 @@ ${qaText}`;
     throw new Error("Model returned invalid JSON.");
   }
 
-  return normalizeProfile(parsed);
+  // Client-matched IDs always win when they form a valid path
+  return normalizeProfile({
+    ...parsed,
+    industryId: lockedTaxonomy.industryId || parsed.industryId,
+    departmentId: lockedTaxonomy.departmentId || parsed.departmentId,
+    roleId: lockedTaxonomy.roleId || parsed.roleId
+  });
 }
 
 function normalizeProfile(parsed) {

@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Mic, MicOff, Volume2 } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { labelOf } from "@/features/taxonomy";
 import {
   INTERVIEW_LANGUAGES,
   LANGUAGE_PROMPT,
-  PROFILE_QUESTIONS,
+  buildProfileQuestions,
   getInterviewLanguage,
-  getQuestionText
+  getQuestionText,
+  getTaxonomyOptions,
+  matchDepartmentFromSpeech,
+  matchIndustryFromSpeech,
+  matchRoleFromSpeech
 } from "../data/voiceInterview";
 import { parseVoiceProfileAnswers } from "../services/voiceProfileService";
 import { speakWithOpenAiTts, stopOpenAiSpeech, prefetchOpenAiTts, clearTtsCache } from "../services/voiceTtsService";
@@ -24,6 +29,7 @@ const copy = {
     speakLanguage: "Say your language clearly",
     speaking: "AI is speaking…",
     askAgain: "Didn't catch that — listening again…",
+    pickFromList: "Please say one option from the list — listening again…",
     voiceUnsupported: "Voice not supported. Use the buttons below.",
     voicePermission: "Allow microphone, then we continue automatically.",
     voiceError: "Couldn't hear you — listening again…",
@@ -32,6 +38,7 @@ const copy = {
     retry: "Try again",
     backToChoice: "Back",
     tapFallback: "Or tap a language",
+    tapTaxonomy: "Or tap an option",
     statusReady: "Speak after the question",
     questionOf: (n, total) => `${n} / ${total}`,
     typeHint: "Typing is optional — only if voice fails"
@@ -44,6 +51,7 @@ const copy = {
     speakLanguage: "अपनी भाषा साफ़ बोलें",
     speaking: "AI बोल रहा है…",
     askAgain: "सुनाई नहीं दिया — फिर सुन रहे हैं…",
+    pickFromList: "सूची में से एक विकल्प बोलें — फिर सुन रहे हैं…",
     voiceUnsupported: "आवाज़ उपलब्ध नहीं। नीचे बटन दबाएँ।",
     voicePermission: "माइक की अनुमति दें, फिर अपने आप चलेगा।",
     voiceError: "सुनाई नहीं दिया — फिर सुन रहे हैं…",
@@ -52,6 +60,7 @@ const copy = {
     retry: "फिर कोशिश",
     backToChoice: "वापस",
     tapFallback: "या भाषा टैप करें",
+    tapTaxonomy: "या विकल्प टैप करें",
     statusReady: "सवाल के बाद बोलें",
     questionOf: (n, total) => `${n} / ${total}`,
     typeHint: "टाइप वैकल्पिक है — सिर्फ आवाज़ न चले तो"
@@ -79,7 +88,6 @@ function matchInterviewLanguage(transcript) {
 
   if (!t) return null;
 
-  // Exact / numbered choices first
   const numbered = {
     "1": "en",
     "2": "hi",
@@ -99,7 +107,6 @@ function matchInterviewLanguage(transcript) {
   };
   if (numbered[t]) return numbered[t];
 
-  // Longer / specific names before short English aliases
   const rules = [
     { code: "bn", needles: ["bengali", "bangla", "বাংলা", "बंगाली"] },
     { code: "mr", needles: ["marathi", "मराठी"] },
@@ -112,10 +119,8 @@ function matchInterviewLanguage(transcript) {
     for (const needle of rule.needles) {
       const n = needle.toLowerCase();
       if (t === n) return rule.code;
-      // word-boundary style match (handles "I want Bengali")
       const re = new RegExp(`(?:^|\\s)${escapeRegExp(n)}(?:\\s|$)`, "i");
       if (re.test(t)) return rule.code;
-      // native-script needles may not use spaces the same way
       if (/[^\u0000-\u007f]/.test(needle) && t.includes(n)) return rule.code;
     }
   }
@@ -134,15 +139,22 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
   const [interviewLang, setInterviewLang] = useState(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const [questions, setQuestions] = useState(() => buildProfileQuestions());
+  const [industryId, setIndustryId] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
   const [heard, setHeard] = useState("");
   const [status, setStatus] = useState(ui.statusReady);
   const [error, setError] = useState(null);
   const [showLangButtons, setShowLangButtons] = useState(false);
+  const [showTaxonomyButtons, setShowTaxonomyButtons] = useState(false);
 
   const phaseRef = useRef(phase);
   const interviewLangRef = useRef(interviewLang);
   const questionIndexRef = useRef(questionIndex);
   const answersRef = useRef(answers);
+  const questionsRef = useRef(questions);
+  const industryIdRef = useRef(industryId);
+  const departmentIdRef = useRef(departmentId);
   const advancingRef = useRef(false);
   const retryCountRef = useRef(0);
   const timersRef = useRef([]);
@@ -161,6 +173,15 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
+  useEffect(() => {
+    questionsRef.current = questions;
+  }, [questions]);
+  useEffect(() => {
+    industryIdRef.current = industryId;
+  }, [industryId]);
+  useEffect(() => {
+    departmentIdRef.current = departmentId;
+  }, [departmentId]);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => window.clearTimeout(id));
@@ -175,6 +196,16 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
 
   const stopSpeech = useCallback(() => {
     stopOpenAiSpeech();
+  }, []);
+
+  const rebuildQuestions = useCallback((nextIndustryId, nextDepartmentId) => {
+    const next = buildProfileQuestions({
+      industryId: nextIndustryId,
+      departmentId: nextDepartmentId
+    });
+    questionsRef.current = next;
+    setQuestions(next);
+    return next;
   }, []);
 
   const finishInterview = useCallback(
@@ -199,46 +230,118 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
     [onComplete, siteLang, ui.building, ui.parseError, ui.statusReady]
   );
 
+  const scheduleRetryListen = useCallback(
+    (message) => {
+      advancingRef.current = false;
+      setStatus(message);
+      retryCountRef.current += 1;
+      if (retryCountRef.current >= 2) {
+        setShowTaxonomyButtons(true);
+      }
+      later(() => startListeningRef.current?.(), RETRY_LISTEN_MS);
+    },
+    [later]
+  );
+
   const commitAnswer = useCallback(
-    async (rawAnswer) => {
+    async (rawAnswer, { taxonomyItem = null } = {}) => {
       if (advancingRef.current) return;
       advancingRef.current = true;
 
       const langCode = interviewLangRef.current;
       const index = questionIndexRef.current;
-      const question = PROFILE_QUESTIONS[index];
+      const questionList = questionsRef.current;
+      const question = questionList[index];
       if (!question || !langCode) {
         advancingRef.current = false;
         return;
       }
 
       const trimmed = String(rawAnswer || "").trim();
-      const isLast = index >= PROFILE_QUESTIONS.length - 1;
       const skip = question.id === "extra" && (!trimmed || isSkipAnswer(trimmed));
 
       if (!trimmed && question.id !== "extra") {
-        advancingRef.current = false;
-        setStatus(ui.askAgain);
-        retryCountRef.current += 1;
-        later(() => startListeningRef.current?.(), RETRY_LISTEN_MS);
+        scheduleRetryListen(ui.askAgain);
         return false;
       }
 
-      const entry = {
+      let entry = {
         id: question.id,
         question: getQuestionText(question, langCode),
         answer: skip ? "" : trimmed
       };
+
+      let nextIndustryId = industryIdRef.current;
+      let nextDepartmentId = departmentIdRef.current;
+
+      if (question.id === "industry") {
+        const matched = taxonomyItem || matchIndustryFromSpeech(trimmed);
+        if (!matched) {
+          scheduleRetryListen(ui.pickFromList);
+          return false;
+        }
+        nextIndustryId = matched.id;
+        nextDepartmentId = null;
+        industryIdRef.current = matched.id;
+        departmentIdRef.current = null;
+        setIndustryId(matched.id);
+        setDepartmentId(null);
+        entry = {
+          ...entry,
+          answer: labelOf(matched, langCode === "hi" ? "hi" : "en"),
+          taxonomyId: matched.id
+        };
+        rebuildQuestions(matched.id, null);
+      } else if (question.id === "department") {
+        const matched =
+          taxonomyItem || matchDepartmentFromSpeech(trimmed, industryIdRef.current);
+        if (!matched) {
+          scheduleRetryListen(ui.pickFromList);
+          return false;
+        }
+        nextDepartmentId = matched.id;
+        departmentIdRef.current = matched.id;
+        setDepartmentId(matched.id);
+        entry = {
+          ...entry,
+          answer: labelOf(matched, langCode === "hi" ? "hi" : "en"),
+          taxonomyId: matched.id
+        };
+        rebuildQuestions(nextIndustryId, matched.id);
+      } else if (question.id === "role") {
+        const matched =
+          taxonomyItem ||
+          matchRoleFromSpeech(trimmed, industryIdRef.current, departmentIdRef.current);
+        if (!matched) {
+          scheduleRetryListen(ui.pickFromList);
+          return false;
+        }
+        entry = {
+          ...entry,
+          answer: labelOf(matched, langCode === "hi" ? "hi" : "en"),
+          taxonomyId: matched.id
+        };
+      }
+
       const nextAnswers = [...answersRef.current, entry];
+      const latestQuestions = questionsRef.current;
+      const isLast = index >= latestQuestions.length - 1;
+
       setAnswers(nextAnswers);
-      setHeard(trimmed || (skip ? "skip" : ""));
+      setHeard(entry.answer || (skip ? "skip" : trimmed));
       setStatus(isLast ? ui.building : ui.movingOn);
       setError(null);
+      setShowTaxonomyButtons(false);
       retryCountRef.current = 0;
 
       if (isLast) {
         await finishInterview(nextAnswers, langCode);
         return true;
+      }
+
+      const nextQuestion = questionsRef.current[index + 1];
+      if (nextQuestion) {
+        prefetchOpenAiTts(getQuestionText(nextQuestion, langCode), langCode);
       }
 
       later(() => {
@@ -248,8 +351,17 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
       }, ADVANCE_DELAY_MS);
       return true;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setCurrentQuestionAndSpeak defined below via ref pattern
-    [finishInterview, later, ui.askAgain, ui.building, ui.movingOn]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setCurrentQuestionAndSpeak via ref pattern
+    [
+      finishInterview,
+      later,
+      rebuildQuestions,
+      scheduleRetryListen,
+      ui.askAgain,
+      ui.building,
+      ui.movingOn,
+      ui.pickFromList
+    ]
   );
 
   const startListeningRef = useRef(null);
@@ -299,20 +411,22 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
       if (code === "unsupported" || code === "start-failed") {
         setError(ui.voiceUnsupported);
         setShowLangButtons(true);
+        setShowTaxonomyButtons(true);
         setStatus(ui.tapFallback);
         return;
       }
       if (code === "not-allowed" || code === "service-not-allowed") {
         setError(ui.voicePermission);
         setShowLangButtons(true);
+        setShowTaxonomyButtons(true);
         return;
       }
 
-      // Auto-retry listening on silence / transient errors
       setStatus(ui.askAgain);
       retryCountRef.current += 1;
       if (retryCountRef.current >= 3) {
         setShowLangButtons(phaseRef.current === "language");
+        setShowTaxonomyButtons(phaseRef.current === "questions");
         setError(ui.voiceError);
       }
       later(() => startListeningRef.current?.(), RETRY_LISTEN_MS);
@@ -332,12 +446,16 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
       setStatus(ui.listening);
       start();
 
-      // Prefetch next question audio while the user answers (cuts delay)
       const langCode = interviewLangRef.current;
       const nextIndex = questionIndexRef.current + 1;
-      if (langCode && nextIndex < PROFILE_QUESTIONS.length) {
-        const nextQ = PROFILE_QUESTIONS[nextIndex];
-        prefetchOpenAiTts(getQuestionText(nextQ, langCode), langCode);
+      const questionList = questionsRef.current;
+      if (langCode && nextIndex < questionList.length) {
+        const nextQ = questionList[nextIndex];
+        // Industry/department answers rebuild the following question — only prefetch
+        // static follow-ups when the next id is not taxonomy-dependent.
+        if (nextQ && !["department", "role"].includes(nextQ.id)) {
+          prefetchOpenAiTts(getQuestionText(nextQ, langCode), langCode);
+        }
       }
     }, LISTEN_AFTER_TTS_MS);
   }, [later, start, ui.listening]);
@@ -359,9 +477,10 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
       questionIndexRef.current = index;
       setHeard("");
       setError(null);
+      setShowTaxonomyButtons(false);
       setStatus(ui.speaking);
 
-      const question = PROFILE_QUESTIONS[index];
+      const question = questionsRef.current[index];
       if (!question) return;
       const text = getQuestionText(question, langCode);
       try {
@@ -370,6 +489,7 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
         console.error("TTS failed:", err);
         setError(ui.ttsError);
         setStatus(ui.statusReady);
+        setShowTaxonomyButtons(question.kind === "taxonomy");
         return;
       }
       if (phaseRef.current !== "questions") return;
@@ -388,26 +508,30 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
       interviewLangRef.current = langCode;
       setAnswers([]);
       answersRef.current = [];
+      setIndustryId(null);
+      setDepartmentId(null);
+      industryIdRef.current = null;
+      departmentIdRef.current = null;
+      const initialQuestions = rebuildQuestions(null, null);
       setQuestionIndex(0);
       questionIndexRef.current = 0;
       setHeard("");
       setError(null);
       setShowLangButtons(false);
+      setShowTaxonomyButtons(false);
       setPhase("questions");
       phaseRef.current = "questions";
       advancingRef.current = false;
       retryCountRef.current = 0;
-      // Warm first question while we prepare to speak it
-      const first = PROFILE_QUESTIONS[0];
+      const first = initialQuestions[0];
       if (first) prefetchOpenAiTts(getQuestionText(first, langCode), langCode);
       later(() => {
         setCurrentQuestionAndSpeak(0, langCode);
       }, 80);
     },
-    [clearTimers, later, setCurrentQuestionAndSpeak, stop, stopSpeech]
+    [clearTimers, later, rebuildQuestions, setCurrentQuestionAndSpeak, stop, stopSpeech]
   );
 
-  // Kick off language prompt automatically with OpenAI TTS
   useEffect(() => {
     let cancelled = false;
     async function boot() {
@@ -450,6 +574,16 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
     beginQuestions(code);
   };
 
+  const handleTaxonomyTap = (item) => {
+    if (advancingRef.current || phase !== "questions") return;
+    stop();
+    setHeard(labelOf(item, interviewLang === "hi" ? "hi" : "en"));
+    setStatus(ui.heard);
+    later(() => {
+      commitAnswerRef.current?.(item.en, { taxonomyItem: item });
+    }, 400);
+  };
+
   const handleRetry = () => {
     setError(null);
     retryCountRef.current = 0;
@@ -471,11 +605,19 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
   };
 
   const languagePrompt = LANGUAGE_PROMPT[siteLang] || LANGUAGE_PROMPT.en;
-  const currentQuestion = PROFILE_QUESTIONS[questionIndex];
+  const currentQuestion = questions[questionIndex];
   const questionText =
     currentQuestion && interviewLang
       ? getQuestionText(currentQuestion, interviewLang)
       : languagePrompt;
+
+  const taxonomyOptions =
+    phase === "questions" && currentQuestion?.kind === "taxonomy"
+      ? getTaxonomyOptions(currentQuestion.id, {
+          industryId,
+          departmentId
+        })
+      : [];
 
   const displayHeard = heard || (listening ? interimTranscript : "");
 
@@ -493,7 +635,7 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
       {phase === "questions" && (
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs font-bold text-[#F97316]">
-            {ui.questionOf(questionIndex + 1, PROFILE_QUESTIONS.length)}
+            {ui.questionOf(questionIndex + 1, questions.length)}
           </p>
           <span className="rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-0.5 text-[10px] font-semibold text-[#64748B]">
             {getInterviewLanguage(interviewLang)[siteLang === "hi" ? "hi" : "en"]}
@@ -597,6 +739,27 @@ function VoiceInterviewPanel({ siteLang = "en", onComplete, onCancel }) {
           </div>
         </div>
       )}
+
+      {phase === "questions" &&
+        currentQuestion?.kind === "taxonomy" &&
+        taxonomyOptions.length > 0 &&
+        (showTaxonomyButtons || !supported || taxonomyOptions.length <= 12) && (
+          <div className="max-h-56 space-y-2 overflow-y-auto border-t border-[#E2E8F0] pt-3">
+            <p className="text-xs font-semibold text-[#64748B]">{ui.tapTaxonomy}</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {taxonomyOptions.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleTaxonomyTap(item)}
+                  className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-left text-sm font-bold text-[#0F172A] hover:border-[#F97316]"
+                >
+                  {labelOf(item, interviewLang === "hi" || siteLang === "hi" ? "hi" : "en")}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
     </div>
   );
 }
