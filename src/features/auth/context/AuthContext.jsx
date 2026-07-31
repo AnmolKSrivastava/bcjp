@@ -42,6 +42,7 @@ function AuthProvider({ children }) {
             setCandidateProfile(null);
             setOrganization(await loadEmployerOrganization(userProfile));
           } else {
+            // admin or unknown role — no worker/employer side data
             setCandidateProfile(null);
             setOrganization(null);
           }

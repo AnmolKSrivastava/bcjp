@@ -6,6 +6,7 @@ import { LoginModal, RoleSelectionModal, useAuth } from "@/features/auth";
 import { RECAPTCHA_CONTAINER_ID } from "@/features/auth/hooks/usePhoneAuth";
 import { CreateProfileModal, WorkerDashboard } from "@/features/profile";
 import { CreateCompanyModal, PostJobModal, EmployerDashboard } from "@/features/employer";
+import { AdminDashboard } from "@/features/admin";
 import { JobDetailsPage } from "@/features/jobs";
 import { IndustryDetailPage } from "@/features/industries";
 import { Navbar } from "@/shared/layout/Navbar";
@@ -183,6 +184,10 @@ function App() {
       setLoginOpen(true);
       return;
     }
+    if (profile?.role === USER_ROLES.ADMIN) {
+      navigate("/admin");
+      return;
+    }
     if (profile?.role === USER_ROLES.EMPLOYER) {
       navigate("/employer/dashboard");
       return;
@@ -219,8 +224,10 @@ function App() {
             showSetupCompany={profile?.role === USER_ROLES.EMPLOYER && !profile.onboardingComplete}
             showPostJob={!profile || (profile?.role === USER_ROLES.EMPLOYER && profile.onboardingComplete)}
             showDashboard={
-              (profile?.role === USER_ROLES.EMPLOYER || profile?.role === USER_ROLES.WORKER) &&
-              Boolean(profile?.onboardingComplete)
+              (profile?.role === USER_ROLES.EMPLOYER ||
+                profile?.role === USER_ROLES.WORKER ||
+                profile?.role === USER_ROLES.ADMIN) &&
+              Boolean(profile?.onboardingComplete || profile?.role === USER_ROLES.ADMIN)
             }
             profileComplete={
               profile?.role === USER_ROLES.WORKER && Boolean(profile?.onboardingComplete)
@@ -255,6 +262,10 @@ function App() {
             <Route
               path="/industries/:industryId"
               element={<IndustryDetailPage lang={activeLang} />}
+            />
+            <Route
+              path="/admin"
+              element={<AdminDashboard lang={activeLang} />}
             />
             <Route
               path="/employer/dashboard"

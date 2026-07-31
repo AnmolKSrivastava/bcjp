@@ -50,7 +50,8 @@ const COLLECTIONS = {
 };
 const USER_ROLES = {
   WORKER: "worker",
-  EMPLOYER: "employer"
+  EMPLOYER: "employer",
+  ADMIN: "admin"
 };
 export {
   API_ENDPOINTS,

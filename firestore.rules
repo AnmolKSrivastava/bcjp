@@ -19,75 +19,80 @@ service cloud.firestore {
       return isSignedIn() && userDoc().role == 'employer';
     }
 
+    function isAdmin() {
+      return isSignedIn() && userDoc().role == 'admin';
+    }
+
     function belongsToOrg(orgId) {
       return isSignedIn() && userDoc().organizationId == orgId;
     }
 
     // ---- users/ ----
-    // Each user may read and manage only their own document.
+    // Owner manages own doc; platform admins can list/read all users.
+    // Admin role cannot be self-assigned via client create/update.
     match /users/{uid} {
-      allow read: if isOwner(uid);
+      allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid)
         && request.resource.data.role in ['worker', 'employer']
         && request.resource.data.phone == request.auth.token.phone_number;
-      // Role and phone are immutable after onboarding.
-      allow update: if isOwner(uid)
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.phone == resource.data.phone;
+      allow update: if (isOwner(uid)
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.phone == resource.data.phone)
+        || (isAdmin()
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.phone == resource.data.phone);
       allow delete: if false;
     }
 
     // ---- organizations/ ----
-    // Employers create and manage their own organization.
     match /organizations/{orgId} {
       allow read: if isSignedIn();
       allow create: if isEmployer()
         && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isEmployer() && belongsToOrg(orgId);
+      allow update: if (isEmployer() && belongsToOrg(orgId)) || isAdmin();
       allow delete: if false;
     }
 
     // ---- jobOpenings/ ----
-    // Open jobs are publicly readable; only the owning organization writes.
     match /jobOpenings/{jobId} {
       allow read: if resource.data.status == 'open' || isSignedIn();
       allow create: if isEmployer()
         && belongsToOrg(request.resource.data.organizationId);
-      allow update: if isEmployer()
-        && belongsToOrg(resource.data.organizationId)
-        && request.resource.data.organizationId == resource.data.organizationId;
+      allow update: if (isEmployer()
+          && belongsToOrg(resource.data.organizationId)
+          && request.resource.data.organizationId == resource.data.organizationId)
+        || (isAdmin()
+          && request.resource.data.organizationId == resource.data.organizationId);
       allow delete: if false;
     }
 
     // ---- applications/ ----
-    // Workers create and read their own applications;
-    // employers read/update applications for their organization's jobs.
     match /applications/{applicationId} {
       allow create: if isSignedIn()
         && request.resource.data.candidateId == request.auth.uid;
       allow read: if isSignedIn()
         && (resource.data.candidateId == request.auth.uid
-          || belongsToOrg(resource.data.organizationId));
-      allow update: if isEmployer()
-        && belongsToOrg(resource.data.organizationId)
-        && request.resource.data.candidateId == resource.data.candidateId
-        && request.resource.data.organizationId == resource.data.organizationId;
+          || belongsToOrg(resource.data.organizationId)
+          || isAdmin());
+      allow update: if (isEmployer()
+          && belongsToOrg(resource.data.organizationId)
+          && request.resource.data.candidateId == resource.data.candidateId
+          && request.resource.data.organizationId == resource.data.organizationId)
+        || isAdmin();
       allow delete: if false;
     }
 
     // ---- candidates/ ----
-    // Workers own their candidate profile; employers read when hiring (future).
     match /candidates/{uid} {
-      allow read: if isOwner(uid) || isEmployer();
+      allow read: if isOwner(uid) || isEmployer() || isAdmin();
       allow create, update: if isOwner(uid) && userDoc().role == 'worker';
       allow delete: if false;
     }
 
     // ---- savedJobs/ ----
-    // Workers can save/unsave jobs for themselves.
     match /savedJobs/{savedId} {
       allow read: if isSignedIn()
-        && resource.data.candidateId == request.auth.uid;
+        && (resource.data.candidateId == request.auth.uid || isAdmin());
       allow create: if isSignedIn()
         && request.resource.data.candidateId == request.auth.uid;
       allow delete: if isSignedIn()
@@ -95,7 +100,6 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    // Deny everything else by default.
     match /{document=**} {
       allow read, write: if false;
     }

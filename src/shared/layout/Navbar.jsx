@@ -36,7 +36,8 @@ const t = {
     myAccount: "My Account",
     logout: "Logout",
     roleWorker: "Job Seeker",
-    roleEmployer: "Employer"
+    roleEmployer: "Employer",
+    roleAdmin: "Admin"
   },
   hi: {
     findJobs: "नौकरी खोजें",
@@ -55,7 +56,8 @@ const t = {
     myAccount: "मेरा खाता",
     logout: "लॉगआउट",
     roleWorker: "नौकरी खोजने वाले",
-    roleEmployer: "नियोक्ता"
+    roleEmployer: "नियोक्ता",
+    roleAdmin: "एडमिन"
   }
 };
 const navLinks = [
@@ -105,7 +107,14 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
   const txt = t[lang];
   const { user, profile, signOut } = useAuth();
   const isLoggedIn = Boolean(user);
-  const roleLabel = profile?.role === "employer" ? txt.roleEmployer : profile?.role === "worker" ? txt.roleWorker : null;
+  const roleLabel =
+    profile?.role === "employer"
+      ? txt.roleEmployer
+      : profile?.role === "worker"
+        ? txt.roleWorker
+        : profile?.role === "admin"
+          ? txt.roleAdmin
+          : null;
   const postJobSecondary = showCreateProfile && showPostJob;
   const profileCtaLabel = profileComplete ? txt.editProfile : txt.createProfile;
   const scrollTo = (id) => {
