@@ -96,11 +96,7 @@ async function reopenJobOpening(jobId) {
 /**
  * Create a job opening for an employer's organization.
  */
-async function createJobOpening({ userId, organization, formData }) {
-  if (!organization?.id) {
-    throw new Error("Organization is required to post a job.");
-  }
-
+function buildJobFields(formData) {
   if (
     !isValidTaxonomy({
       industryId: formData.industryId,
@@ -117,25 +113,51 @@ async function createJobOpening({ userId, organization, formData }) {
     roleId: formData.roleId
   });
 
-  const jobRef = doc(collection(getFirebaseDb(), COLLECTIONS.JOB_OPENINGS));
-  const salaryMin = parseSalaryNumber(formData.salaryMin);
-  const salaryMax = parseSalaryNumber(formData.salaryMax);
-  const openings = Number(formData.openings) || 1;
-
-  const job = {
-    organizationId: organization.id,
-    organizationName: organization.name ?? "",
+  return {
     ...taxonomy,
     // Legacy field kept for older listings that read title
     title: taxonomy.roleName,
     description: formData.description.trim(),
     employmentType: formData.employmentType,
     location: formData.location.trim(),
-    salaryMin,
-    salaryMax,
-    openings,
+    salaryMin: parseSalaryNumber(formData.salaryMin),
+    salaryMax: parseSalaryNumber(formData.salaryMax),
+    openings: Number(formData.openings) || 1,
     experienceRequired: formData.experienceRequired,
-    skills: parseSkillsInput(formData.skills),
+    skills: parseSkillsInput(formData.skills)
+  };
+}
+
+/** Map a job doc into PostJobModal form state */
+function jobToForm(job) {
+  if (!job) return null;
+  return {
+    industryId: job.industryId || "",
+    departmentId: job.departmentId || "",
+    roleId: job.roleId || "",
+    employmentType: job.employmentType || "",
+    location: job.location || "",
+    salaryMin: job.salaryMin != null ? String(job.salaryMin) : "",
+    salaryMax: job.salaryMax != null ? String(job.salaryMax) : "",
+    openings: job.openings != null ? String(job.openings) : "1",
+    experienceRequired: job.experienceRequired || "",
+    skills: Array.isArray(job.skills) ? job.skills.join(", ") : "",
+    description: job.description || ""
+  };
+}
+
+async function createJobOpening({ userId, organization, formData }) {
+  if (!organization?.id) {
+    throw new Error("Organization is required to post a job.");
+  }
+
+  const fields = buildJobFields(formData);
+  const jobRef = doc(collection(getFirebaseDb(), COLLECTIONS.JOB_OPENINGS));
+
+  const job = {
+    organizationId: organization.id,
+    organizationName: organization.name ?? "",
+    ...fields,
     status: "open",
     createdBy: userId,
     publishedAt: serverTimestamp(),
@@ -148,13 +170,36 @@ async function createJobOpening({ userId, organization, formData }) {
   return fetchJobOpening(jobRef.id);
 }
 
+/**
+ * Update editable fields on an existing job. Preserves org, creator, status, timestamps.
+ */
+async function updateJobOpening(jobId, formData) {
+  if (!jobId) {
+    throw new Error("Job id is required.");
+  }
+
+  const existing = await fetchJobOpening(jobId);
+  if (!existing) {
+    throw new Error("Job not found.");
+  }
+
+  const fields = buildJobFields(formData);
+  await updateDoc(jobDocRef(jobId), {
+    ...fields,
+    updatedAt: serverTimestamp()
+  });
+  return fetchJobOpening(jobId);
+}
+
 export {
   closeJobOpening,
   createJobOpening,
   fetchJobOpening,
+  jobToForm,
   listOpenJobs,
   listOrganizationJobs,
   parseSkillsInput,
   reopenJobOpening,
+  updateJobOpening,
   updateJobStatus
 };

@@ -51,6 +51,7 @@ const t = {
     workerOnly: "This dashboard is for job seekers only.",
     profileRequired: "Please create your profile first.",
     createProfile: "Create Profile",
+    editProfile: "Edit Profile",
     profileSummary: "Your Profile",
     statApplications: "Applications",
     statShortlisted: "Shortlisted",
@@ -79,6 +80,7 @@ const t = {
     workerOnly: "यह डैशबोर्ड केवल नौकरी खोजने वालों के लिए है।",
     profileRequired: "कृपया पहले अपनी प्रोफाइल बनाएं।",
     createProfile: "प्रोफाइल बनाएं",
+    editProfile: "प्रोफाइल संपादित करें",
     profileSummary: "आपकी प्रोफाइल",
     statApplications: "आवेदन",
     statShortlisted: "शॉर्टलिस्ट",
@@ -103,7 +105,7 @@ function formatDate(value) {
   return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function WorkerDashboard({ lang = "en", onCreateProfileClick }) {
+function WorkerDashboard({ lang = "en", onCreateProfileClick, onEditProfileClick }) {
   const txt = t[lang];
   const navigate = useNavigate();
   const { user, profile, candidateProfile, loading: authLoading, profileLoading } = useAuth();
@@ -276,14 +278,24 @@ function WorkerDashboard({ lang = "en", onCreateProfileClick }) {
                 : txt.subtitle}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={goBrowseJobs}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 py-3 text-sm font-bold text-white hover:bg-blue-700"
-          >
-            <Briefcase className="h-4 w-4" />
-            {txt.browseJobs}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={onEditProfileClick || onCreateProfileClick}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-5 py-3 text-sm font-bold text-[#0F172A] hover:border-[#2563EB] hover:text-[#2563EB]"
+            >
+              <User className="h-4 w-4" />
+              {txt.editProfile}
+            </button>
+            <button
+              type="button"
+              onClick={goBrowseJobs}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 py-3 text-sm font-bold text-white hover:bg-blue-700"
+            >
+              <Briefcase className="h-4 w-4" />
+              {txt.browseJobs}
+            </button>
+          </div>
         </div>
       </div>
 

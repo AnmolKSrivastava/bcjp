@@ -9,7 +9,8 @@ import {
   Phone,
   Users,
   XCircle,
-  RotateCcw
+  RotateCcw,
+  Pencil
 } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { displayIndustryLabel, displayRoleLabel } from "@/features/taxonomy";
@@ -46,6 +47,7 @@ const t = {
     closed: "Closed",
     closeJob: "Close job",
     reopenJob: "Reopen",
+    editJob: "Edit",
     noJobs: "No jobs posted yet.",
     noApplicants: "No applicants for this selection.",
     loading: "Loading dashboard…",
@@ -78,6 +80,7 @@ const t = {
     closed: "बंद",
     closeJob: "नौकरी बंद करें",
     reopenJob: "फिर खोलें",
+    editJob: "संपादित करें",
     noJobs: "अभी कोई नौकरी पोस्ट नहीं हुई।",
     noApplicants: "इस चयन के लिए कोई आवेदक नहीं।",
     loading: "डैशबोर्ड लोड हो रहा है…",
@@ -117,7 +120,13 @@ function formatDate(value) {
   return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick }) {
+function EmployerDashboard({
+  lang = "en",
+  onPostJobClick,
+  onSetupCompanyClick,
+  onEditJobClick,
+  jobsVersion = 0
+}) {
   const txt = t[lang];
   const { user, profile, organization, loading: authLoading, profileLoading } = useAuth();
   const [jobs, setJobs] = useState([]);
@@ -157,7 +166,7 @@ function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick })
   useEffect(() => {
     if (authLoading || profileLoading) return;
     loadDashboard();
-  }, [authLoading, profileLoading, loadDashboard]);
+  }, [authLoading, profileLoading, loadDashboard, jobsVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -395,7 +404,15 @@ function EmployerDashboard({ lang = "en", onPostJobClick, onSetupCompanyClick })
                             </span>
                           </div>
                         </button>
-                        <div className="mt-4 flex gap-2">
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onEditJobClick?.(job)}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] px-3 py-2 text-xs font-semibold text-[#0F172A] hover:border-[#2563EB] hover:text-[#2563EB]"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            {txt.editJob}
+                          </button>
                           {isOpen ? (
                             <button
                               type="button"

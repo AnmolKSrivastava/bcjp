@@ -29,7 +29,7 @@ import {
   labelOf,
   resolveTaxonomy
 } from "@/features/taxonomy";
-import { createJobOpening } from "../services/jobService";
+import { createJobOpening, updateJobOpening, jobToForm } from "../services/jobService";
 import { fetchOrganization } from "../services/organizationService";
 
 const EMPLOYMENT_TYPES = [
@@ -64,11 +64,16 @@ const EMPTY_FORM = {
 const t = {
   en: {
     title: "Post a Job",
+    editTitle: "Edit Job",
     subtitle: "Fill in the details so workers can find and apply.",
+    editSubtitle: "Update the job details and save changes.",
     previewTitle: "Review Job Posting",
     previewSubtitle: "Check everything before publishing.",
+    editPreviewSubtitle: "Check everything before saving.",
     successTitle: "Job Posted!",
+    editSuccessTitle: "Job Updated!",
     successSubtitle: "Workers can now see and apply to this job.",
+    editSuccessSubtitle: "Your job changes have been saved.",
     industry: "Industry",
     industryPlaceholder: "Select industry",
     department: "Department",
@@ -93,7 +98,9 @@ const t = {
     continue: "Continue",
     back: "Back",
     publish: "Publish Job",
+    saveChanges: "Save Changes",
     publishing: "Publishing...",
+    saving: "Saving...",
     jobId: "Job ID",
     done: "Done",
     postAnother: "Post Another Job",
@@ -105,15 +112,21 @@ const t = {
     companyRequired: "Please set up your company first.",
     required: "Please fill all required fields.",
     salaryInvalid: "Max salary should be greater than or equal to min salary.",
-    saveError: "Could not post job. Please try again."
+    saveError: "Could not post job. Please try again.",
+    updateError: "Could not update job. Please try again."
   },
   hi: {
     title: "नौकरी पोस्ट करें",
+    editTitle: "नौकरी संपादित करें",
     subtitle: "विवरण भरें ताकि कर्मचारी ढूंढ सकें और आवेदन कर सकें।",
+    editSubtitle: "नौकरी का विवरण अपडेट करें और सेव करें।",
     previewTitle: "नौकरी विवरण देखें",
     previewSubtitle: "प्रकाशित करने से पहले सब कुछ जाँच लें।",
+    editPreviewSubtitle: "सेव करने से पहले सब कुछ जाँच लें।",
     successTitle: "नौकरी पोस्ट हो गई!",
+    editSuccessTitle: "नौकरी अपडेट हो गई!",
     successSubtitle: "अब कर्मचारी इस नौकरी को देख और आवेदन कर सकते हैं।",
+    editSuccessSubtitle: "आपके बदलाव सेव हो गए हैं।",
     industry: "उद्योग",
     industryPlaceholder: "उद्योग चुनें",
     department: "विभाग",
@@ -138,7 +151,9 @@ const t = {
     continue: "आगे बढ़ें",
     back: "वापस",
     publish: "नौकरी प्रकाशित करें",
+    saveChanges: "बदलाव सेव करें",
     publishing: "प्रकाशित हो रहा है...",
+    saving: "सेव हो रहा है...",
     jobId: "नौकरी ID",
     done: "हो गया",
     postAnother: "और नौकरी पोस्ट करें",
@@ -150,7 +165,8 @@ const t = {
     companyRequired: "कृपया पहले अपनी कंपनी सेटअप करें।",
     required: "कृपया सभी आवश्यक फ़ील्ड भरें।",
     salaryInvalid: "अधिकतम वेतन न्यूनतम वेतन से कम नहीं होना चाहिए।",
-    saveError: "नौकरी पोस्ट नहीं हो सकी। कृपया पुनः प्रयास करें।"
+    saveError: "नौकरी पोस्ट नहीं हो सकी। कृपया पुनः प्रयास करें।",
+    updateError: "नौकरी अपडेट नहीं हो सकी। कृपया पुनः प्रयास करें।"
   }
 };
 
@@ -170,9 +186,10 @@ function formatSalaryRange(min, max, lang) {
   return `${fmt(maxN)}${lang === "hi" ? "/माह तक" : " max/month"}`;
 }
 
-function PostJobModal({ open, onOpenChange, lang, onComplete }) {
+function PostJobModal({ open, onOpenChange, lang, onComplete, job = null }) {
   const txt = t[lang];
   const { user, profile, organization } = useAuth();
+  const isEdit = Boolean(job?.id);
   const [step, setStep] = useState("form");
   const [form, setForm] = useState(EMPTY_FORM);
   const [savedJob, setSavedJob] = useState(null);
@@ -186,8 +203,23 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
       setSavedJob(null);
       setSaving(false);
       setError(null);
+      return;
     }
-  }, [open]);
+
+    if (job?.id) {
+      const prefill = jobToForm(job);
+      setForm(prefill || EMPTY_FORM);
+      setStep("form");
+      setSavedJob(null);
+      setError(null);
+      return;
+    }
+
+    setStep("form");
+    setForm(EMPTY_FORM);
+    setSavedJob(null);
+    setError(null);
+  }, [open, job]);
 
   useEffect(() => {
     if (step !== "success" || !open) return;
@@ -239,26 +271,31 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
     setSaving(true);
     setError(null);
     try {
-      let org = organization;
-      if (!org?.id && profile?.organizationId) {
-        org = await fetchOrganization(profile.organizationId);
+      let result;
+      if (isEdit) {
+        result = await updateJobOpening(job.id, form);
+      } else {
+        let org = organization;
+        if (!org?.id && profile?.organizationId) {
+          org = await fetchOrganization(profile.organizationId);
+        }
+        if (!org?.id) {
+          setError(txt.companyRequired);
+          setSaving(false);
+          return;
+        }
+        result = await createJobOpening({
+          userId: user.uid,
+          organization: org,
+          formData: form
+        });
       }
-      if (!org?.id) {
-        setError(txt.companyRequired);
-        setSaving(false);
-        return;
-      }
-      const job = await createJobOpening({
-        userId: user.uid,
-        organization: org,
-        formData: form
-      });
-      setSavedJob(job);
+      setSavedJob(result);
       setStep("success");
-      onComplete?.(job);
+      onComplete?.(result);
     } catch (err) {
-      console.error("Post job failed:", err);
-      setError(txt.saveError);
+      console.error(isEdit ? "Update job failed:" : "Post job failed:", err);
+      setError(isEdit ? txt.updateError : txt.saveError);
     } finally {
       setSaving(false);
     }
@@ -302,14 +339,14 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
             <Briefcase className="h-7 w-7 text-[#2563EB]" />
           </div>
           <DialogTitle className="text-base sm:text-2xl font-bold text-[#0F172A]">
-            {step === "form" && txt.title}
+            {step === "form" && (isEdit ? txt.editTitle : txt.title)}
             {step === "preview" && txt.previewTitle}
-            {step === "success" && txt.successTitle}
+            {step === "success" && (isEdit ? txt.editSuccessTitle : txt.successTitle)}
           </DialogTitle>
           <DialogDescription className="text-[#64748B]">
-            {step === "form" && txt.subtitle}
-            {step === "preview" && txt.previewSubtitle}
-            {step === "success" && txt.successSubtitle}
+            {step === "form" && (isEdit ? txt.editSubtitle : txt.subtitle)}
+            {step === "preview" && (isEdit ? txt.editPreviewSubtitle : txt.previewSubtitle)}
+            {step === "success" && (isEdit ? txt.editSuccessSubtitle : txt.successSubtitle)}
           </DialogDescription>
         </DialogHeader>
 
@@ -577,7 +614,13 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg sm:rounded-2xl bg-[#F97316] py-2.5 sm:py-4 text-sm sm:text-lg font-bold text-white transition-all hover:bg-orange-500 disabled:opacity-70"
                 >
                   {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-                  {saving ? txt.publishing : txt.publish}
+                  {saving
+                    ? isEdit
+                      ? txt.saving
+                      : txt.publishing
+                    : isEdit
+                      ? txt.saveChanges
+                      : txt.publish}
                 </button>
               </div>
             </motion.div>
@@ -604,13 +647,15 @@ function PostJobModal({ open, onOpenChange, lang, onComplete }) {
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-                <button
-                  type="button"
-                  onClick={handlePostAnother}
-                  className="flex flex-1 items-center justify-center rounded-lg sm:rounded-2xl border border-[#E2E8F0] sm:border-2 py-2.5 sm:py-4 text-xs sm:text-base font-bold text-[#0F172A] hover:border-[#2563EB] hover:text-[#2563EB]"
-                >
-                  {txt.postAnother}
-                </button>
+                {!isEdit && (
+                  <button
+                    type="button"
+                    onClick={handlePostAnother}
+                    className="flex flex-1 items-center justify-center rounded-lg sm:rounded-2xl border border-[#E2E8F0] sm:border-2 py-2.5 sm:py-4 text-xs sm:text-base font-bold text-[#0F172A] hover:border-[#2563EB] hover:text-[#2563EB]"
+                  >
+                    {txt.postAnother}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onOpenChange(false)}

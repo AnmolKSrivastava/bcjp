@@ -32,7 +32,7 @@ import {
   labelOf,
   resolveTaxonomy
 } from "@/features/taxonomy";
-import { saveCandidateProfile } from "../services/candidateService";
+import { saveCandidateProfile, candidateToForm } from "../services/candidateService";
 import { VoiceInterviewPanel } from "./VoiceInterviewPanel";
 
 const EXPERIENCE_OPTIONS = [
@@ -77,11 +77,15 @@ const EMPTY_FORM = {
 const t = {
   en: {
     title: "Create Your Profile",
+    editTitle: "Edit Your Profile",
     subtitle: "Fill in your details to start applying for jobs.",
+    editSubtitle: "Update your details and save changes.",
     previewTitle: "Review Your Profile",
     previewSubtitle: "Check everything before saving.",
     successTitle: "Profile Created!",
+    editSuccessTitle: "Profile Updated!",
     successSubtitle: "You're ready to apply for jobs.",
+    editSuccessSubtitle: "Your changes have been saved.",
     fullName: "Full Name",
     fullNamePlaceholder: "e.g. Rajesh Kumar",
     industry: "Industry",
@@ -104,9 +108,11 @@ const t = {
     languages: "Languages you speak",
     resume: "Resume (optional)",
     resumeHint: "PDF or image, max 5 MB",
+    resumeKeep: "Current resume will be kept unless you upload a new file.",
     continue: "Continue",
     back: "Back",
     createProfile: "Save Profile",
+    saveChanges: "Save Changes",
     saving: "Saving profile...",
     profileId: "Profile ID",
     browseJobs: "Browse Jobs",
@@ -128,11 +134,15 @@ const t = {
   },
   hi: {
     title: "अपनी प्रोफाइल बनाएं",
+    editTitle: "प्रोफाइल संपादित करें",
     subtitle: "नौकरियों के लिए आवेदन शुरू करने के लिए अपनी जानकारी भरें।",
+    editSubtitle: "अपनी जानकारी अपडेट करें और सेव करें।",
     previewTitle: "अपनी प्रोफाइल देखें",
     previewSubtitle: "सेव करने से पहले सब कुछ जाँच लें।",
     successTitle: "प्रोफाइल बन गई!",
+    editSuccessTitle: "प्रोफाइल अपडेट हो गई!",
     successSubtitle: "अब आप नौकरियों के लिए आवेदन कर सकते हैं।",
+    editSuccessSubtitle: "आपके बदलाव सेव हो गए हैं।",
     fullName: "पूरा नाम",
     fullNamePlaceholder: "जैसे राजेश कुमार",
     industry: "उद्योग",
@@ -155,9 +165,11 @@ const t = {
     languages: "आपकी भाषाएँ",
     resume: "रेज़्यूमे (वैकल्पिक)",
     resumeHint: "PDF या फ़ोटो, अधिकतम 5 MB",
+    resumeKeep: "नया फ़ाइल अपलोड न करें तो मौजूदा रेज़्यूमे बना रहेगा।",
     continue: "आगे बढ़ें",
     back: "वापस",
     createProfile: "प्रोफाइल सेव करें",
+    saveChanges: "बदलाव सेव करें",
     saving: "प्रोफाइल सेव हो रही है...",
     profileId: "प्रोफाइल ID",
     browseJobs: "नौकरी देखें",
@@ -185,7 +197,8 @@ function labelFor(options, value, lang) {
 
 function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
   const txt = t[lang];
-  const { user, profile, refreshProfile, refreshCandidateProfile } = useAuth();
+  const { user, profile, candidateProfile, refreshProfile, refreshCandidateProfile } = useAuth();
+  const isEdit = Boolean(candidateProfile && profile?.onboardingComplete);
   const [step, setStep] = useState("choose");
   const [form, setForm] = useState(EMPTY_FORM);
   const [savedProfile, setSavedProfile] = useState(null);
@@ -201,8 +214,25 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
       setSaving(false);
       setError(null);
       setVoiceBanner(false);
+      return;
     }
-  }, [open]);
+
+    if (candidateProfile && profile?.onboardingComplete) {
+      const prefill = candidateToForm(candidateProfile);
+      setForm(prefill || EMPTY_FORM);
+      setStep("form");
+      setVoiceBanner(false);
+      setSavedProfile(null);
+      setError(null);
+      return;
+    }
+
+    setStep("choose");
+    setForm(EMPTY_FORM);
+    setSavedProfile(null);
+    setError(null);
+    setVoiceBanner(false);
+  }, [open, candidateProfile, profile?.onboardingComplete]);
 
   useEffect(() => {
     if (step !== "success" || !open) return;
@@ -330,10 +360,14 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
       : step === "voice"
         ? txt.chooseVoice
         : step === "form"
-          ? txt.title
+          ? isEdit
+            ? txt.editTitle
+            : txt.title
           : step === "preview"
             ? txt.previewTitle
-            : txt.successTitle;
+            : isEdit
+              ? txt.editSuccessTitle
+              : txt.successTitle;
 
   const headerSubtitle =
     step === "choose"
@@ -341,10 +375,14 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
       : step === "voice"
         ? txt.chooseVoiceHint
         : step === "form"
-          ? txt.subtitle
+          ? isEdit
+            ? txt.editSubtitle
+            : txt.subtitle
           : step === "preview"
             ? txt.previewSubtitle
-            : txt.successSubtitle;
+            : isEdit
+              ? txt.editSuccessSubtitle
+              : txt.successSubtitle;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -595,6 +633,9 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
                   className="sr-only"
                   onChange={(e) => updateField("resumeFile", e.target.files?.[0] ?? null)}
                 />
+                {isEdit && candidateProfile?.resumeUrl && !form.resumeFile && (
+                  <p className="text-[10px] sm:text-xs text-[#64748B]">{txt.resumeKeep}</p>
+                )}
               </div>
 
               {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-600">{error}</p>}
@@ -691,7 +732,7 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg sm:rounded-2xl bg-[#F97316] py-2.5 sm:py-4 text-sm sm:text-lg font-bold text-white transition-all hover:bg-orange-500 disabled:opacity-70"
                 >
                   {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-                  {saving ? txt.saving : txt.createProfile}
+                  {saving ? txt.saving : isEdit ? txt.saveChanges : txt.createProfile}
                 </button>
               </div>
             </motion.div>

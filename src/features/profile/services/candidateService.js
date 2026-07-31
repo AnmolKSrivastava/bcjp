@@ -38,6 +38,24 @@ function calcCompletionPercent(data) {
   return Math.round((filled / fields.length) * 100);
 }
 
+/** Map a Firestore candidate doc into CreateProfileModal form state */
+function candidateToForm(candidate) {
+  if (!candidate) return null;
+  return {
+    fullName: candidate.fullName || "",
+    industryId: candidate.industryId || "",
+    departmentId: candidate.departmentId || "",
+    roleId: candidate.roleId || "",
+    yearsOfExperience: candidate.yearsOfExperience || "",
+    preferredWorkLocation: candidate.preferredWorkLocation || "",
+    expectedSalary: candidate.expectedSalary || "",
+    availability: candidate.availability || "",
+    skills: Array.isArray(candidate.skills) ? candidate.skills.join(", ") : "",
+    languages: Array.isArray(candidate.languages) ? candidate.languages : [],
+    resumeFile: null
+  };
+}
+
 async function fetchCandidateProfile(uid) {
   const snapshot = await getDoc(candidateDocRef(uid));
   return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
@@ -67,7 +85,8 @@ async function saveCandidateProfile(uid, formData, phone) {
     roleId: formData.roleId
   });
 
-  let resumeUrl = null;
+  const existing = await fetchCandidateProfile(uid);
+  let resumeUrl = existing?.resumeUrl ?? null;
   if (formData.resumeFile) {
     resumeUrl = await uploadResume(uid, formData.resumeFile);
   }
@@ -85,15 +104,18 @@ async function saveCandidateProfile(uid, formData, phone) {
     availability: formData.availability,
     skills,
     languages: formData.languages,
-    phone: phone ?? "",
+    phone: phone ?? existing?.phone ?? "",
     resumeUrl,
-    status: "active",
+    status: existing?.status || "active",
     profileCompletionPercent: 0,
-    version: 1,
-    createdAt: serverTimestamp(),
+    version: existing?.version || 1,
     updatedAt: serverTimestamp()
   };
   candidate.profileCompletionPercent = calcCompletionPercent(candidate);
+
+  if (!existing) {
+    candidate.createdAt = serverTimestamp();
+  }
 
   await setDoc(candidateDocRef(uid), candidate, { merge: true });
   await updateUserProfile(uid, {
@@ -106,6 +128,7 @@ async function saveCandidateProfile(uid, formData, phone) {
 
 export {
   calcCompletionPercent,
+  candidateToForm,
   fetchCandidateProfile,
   parseSkillsInput,
   saveCandidateProfile

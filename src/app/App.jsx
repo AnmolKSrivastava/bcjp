@@ -92,6 +92,8 @@ function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [companyOpen, setCompanyOpen] = useState(false);
   const [postJobOpen, setPostJobOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
+  const [jobsVersion, setJobsVersion] = useState(0);
   const [jobBrowseMode, setJobBrowseMode] = useState(null);
 
   const scrollToEmployers = () => {
@@ -157,7 +159,23 @@ function App() {
       setCompanyOpen(true);
       return;
     }
+    setEditingJob(null);
     setPostJobOpen(true);
+  };
+
+  const handleEditJobClick = (job) => {
+    if (!user || profile?.role !== USER_ROLES.EMPLOYER) return;
+    setEditingJob(job);
+    setPostJobOpen(true);
+  };
+
+  const handlePostJobOpenChange = (open) => {
+    setPostJobOpen(open);
+    if (!open) setEditingJob(null);
+  };
+
+  const handleJobSaved = () => {
+    setJobsVersion((v) => v + 1);
   };
 
   const handleDashboardClick = () => {
@@ -204,12 +222,21 @@ function App() {
               (profile?.role === USER_ROLES.EMPLOYER || profile?.role === USER_ROLES.WORKER) &&
               Boolean(profile?.onboardingComplete)
             }
+            profileComplete={
+              profile?.role === USER_ROLES.WORKER && Boolean(profile?.onboardingComplete)
+            }
           />
           <LoginModal open={loginOpen} onOpenChange={setLoginOpen} lang={activeLang} />
           <RoleSelectionModal open={needsOnboarding} lang={activeLang} />
           <CreateProfileModal open={profileOpen} onOpenChange={setProfileOpen} lang={activeLang} />
           <CreateCompanyModal open={companyOpen} onOpenChange={setCompanyOpen} lang={activeLang} />
-          <PostJobModal open={postJobOpen} onOpenChange={setPostJobOpen} lang={activeLang} />
+          <PostJobModal
+            open={postJobOpen}
+            onOpenChange={handlePostJobOpenChange}
+            lang={activeLang}
+            job={editingJob}
+            onComplete={handleJobSaved}
+          />
 
           <Routes>
             <Route
@@ -236,6 +263,8 @@ function App() {
                   lang={activeLang}
                   onPostJobClick={handlePostJobClick}
                   onSetupCompanyClick={handleSetupCompanyClick}
+                  onEditJobClick={handleEditJobClick}
+                  jobsVersion={jobsVersion}
                 />
               }
             />
@@ -245,6 +274,7 @@ function App() {
                 <WorkerDashboard
                   lang={activeLang}
                   onCreateProfileClick={handleCreateProfileClick}
+                  onEditProfileClick={handleCreateProfileClick}
                 />
               }
             />

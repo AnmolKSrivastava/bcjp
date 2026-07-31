@@ -27,6 +27,7 @@ const t = {
     aboutUs: "About Us",
     login: "Login",
     createProfile: "Create Profile",
+    editProfile: "Edit Profile",
     setupCompany: "Setup Company",
     postJob: "Post a Job",
     dashboard: "Dashboard",
@@ -45,6 +46,7 @@ const t = {
     aboutUs: "हमारे बारे में",
     login: "लॉगिन",
     createProfile: "प्रोफाइल बनाएं",
+    editProfile: "प्रोफाइल संपादित करें",
     setupCompany: "कंपनी सेटअप",
     postJob: "नौकरी पोस्ट करें",
     dashboard: "डैशबोर्ड",
@@ -97,7 +99,7 @@ function AccountMenu({ txt, phone, roleLabel, onSignOut, onDashboardClick, showD
       </DropdownMenuContent>
     </DropdownMenu>;
 }
-function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetupCompanyClick, onPostJobClick, onDashboardClick, showCreateProfile = true, showSetupCompany = false, showPostJob = false, showDashboard = false }) {
+function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetupCompanyClick, onPostJobClick, onDashboardClick, showCreateProfile = true, showSetupCompany = false, showPostJob = false, showDashboard = false, profileComplete = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const txt = t[lang];
@@ -105,6 +107,7 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
   const isLoggedIn = Boolean(user);
   const roleLabel = profile?.role === "employer" ? txt.roleEmployer : profile?.role === "worker" ? txt.roleWorker : null;
   const postJobSecondary = showCreateProfile && showPostJob;
+  const profileCtaLabel = profileComplete ? txt.editProfile : txt.createProfile;
   const scrollTo = (id) => {
     if (window.location.pathname !== "/") {
       navigate("/");
@@ -202,7 +205,7 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
     className="flex items-center gap-1.5 bg-[#F97316] text-white text-sm font-bold px-3 py-2 rounded-xl hover:bg-orange-500 transition-all hover:shadow-lg hover:shadow-orange-200 shrink-0"
   >
                 <Mic className="h-4 w-4" />
-                {txt.createProfile}
+                {profileCtaLabel}
               </button>}
               {showSetupCompany && <button
     onClick={onSetupCompanyClick}
@@ -244,7 +247,7 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
               </button>}
               {showCreateProfile && <button
     type="button"
-    aria-label={txt.createProfile}
+    aria-label={profileCtaLabel}
     onClick={onCreateProfileClick}
     className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#F97316] text-white hover:bg-orange-500 transition-colors shadow-sm"
   >
