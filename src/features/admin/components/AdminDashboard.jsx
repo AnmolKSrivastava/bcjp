@@ -64,7 +64,8 @@ const t = {
     role: "Role",
     company: "Company",
     howToAdmin:
-      "To grant access: in Firebase Console → Firestore → users/{yourUid} set role to \"admin\" and onboardingComplete to true."
+      "Use /admin/login with an email/password admin account. In Firebase: enable Email/Password, create the user, then set users/{uid}.role = \"admin\".",
+    goLogin: "Admin login"
   },
   hi: {
     title: "प्लेटफ़ॉर्म एडमिन",
@@ -101,7 +102,8 @@ const t = {
     role: "भूमिका",
     company: "कंपनी",
     howToAdmin:
-      "एक्सेस देने के लिए: Firebase Console → Firestore → users/{yourUid} में role = \"admin\" और onboardingComplete = true सेट करें।"
+      "/admin/login पर ईमेल/पासवर्ड से लॉगिन करें। Firebase में Email/Password चालू करें, यूज़र बनाएँ, फिर users/{uid}.role = \"admin\" सेट करें।",
+    goLogin: "एडमिन लॉगिन"
   }
 };
 
@@ -192,7 +194,7 @@ function AdminDashboard({ lang = "en" }) {
   }
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (profile?.role !== USER_ROLES.ADMIN) {
@@ -201,8 +203,11 @@ function AdminDashboard({ lang = "en" }) {
         <Shield className="mx-auto mb-4 h-12 w-12 text-[#F97316]" />
         <p className="text-lg font-bold text-[#0F172A]">{txt.adminOnly}</p>
         <p className="mt-3 text-sm text-[#64748B]">{txt.howToAdmin}</p>
-        <Link to="/" className="mt-6 inline-block font-semibold text-[#2563EB]">
-          {txt.backHome}
+        <Link
+          to="/admin/login"
+          className="mt-6 inline-block font-semibold text-[#2563EB]"
+        >
+          {txt.goLogin}
         </Link>
       </div>
     );

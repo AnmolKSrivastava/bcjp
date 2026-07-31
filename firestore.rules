@@ -32,12 +32,14 @@ service cloud.firestore {
     // Admin role cannot be self-assigned via client create/update.
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
+      // Workers/employers self-create with phone. Admin docs are created in Console.
       allow create: if isOwner(uid)
         && request.resource.data.role in ['worker', 'employer']
         && request.resource.data.phone == request.auth.token.phone_number;
       allow update: if (isOwner(uid)
           && request.resource.data.role == resource.data.role
-          && request.resource.data.phone == resource.data.phone)
+          && request.resource.data.phone == resource.data.phone
+          && request.resource.data.role in ['worker', 'employer', 'admin'])
         || (isAdmin()
           && request.resource.data.role == resource.data.role
           && request.resource.data.phone == resource.data.phone);

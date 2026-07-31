@@ -6,7 +6,7 @@ import { LoginModal, RoleSelectionModal, useAuth } from "@/features/auth";
 import { RECAPTCHA_CONTAINER_ID } from "@/features/auth/hooks/usePhoneAuth";
 import { CreateProfileModal, WorkerDashboard } from "@/features/profile";
 import { CreateCompanyModal, PostJobModal, EmployerDashboard } from "@/features/employer";
-import { AdminDashboard } from "@/features/admin";
+import { AdminDashboard, AdminLoginPage } from "@/features/admin";
 import { JobDetailsPage } from "@/features/jobs";
 import { IndustryDetailPage } from "@/features/industries";
 import { Navbar } from "@/shared/layout/Navbar";
@@ -262,6 +262,10 @@ function App() {
             <Route
               path="/industries/:industryId"
               element={<IndustryDetailPage lang={activeLang} />}
+            />
+            <Route
+              path="/admin/login"
+              element={<AdminLoginPage lang={activeLang} />}
             />
             <Route
               path="/admin"

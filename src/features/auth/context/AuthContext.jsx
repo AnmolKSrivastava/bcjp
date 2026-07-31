@@ -104,7 +104,12 @@ function AuthProvider({ children }) {
     await firebaseSignOut(getFirebaseAuth());
   };
 
-  const needsOnboarding = Boolean(user) && !loading && !profileLoading && !profile;
+  const isEmailPasswordUser = Boolean(
+    user?.providerData?.some((provider) => provider.providerId === "password")
+  );
+  // Phone users pick worker/employer. Email/password is reserved for admin accounts.
+  const needsOnboarding =
+    Boolean(user) && !loading && !profileLoading && !profile && !isEmailPasswordUser;
   const needsCandidateProfile =
     Boolean(user) &&
     !loading &&
