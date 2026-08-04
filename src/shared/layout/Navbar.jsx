@@ -63,9 +63,9 @@ const t = {
 const navLinks = [
   { key: "findJobs", to: "/jobs" },
   { key: "categories", to: "/industries" },
-  { key: "forEmployers", id: "employers" },
+  { key: "forEmployers", to: "/employers" },
   { key: "successStories", id: "stories" },
-  { key: "aboutUs", id: "cta" }
+  { key: "aboutUs", to: "/about" }
 ];
 function AccountMenu({ txt, phone, roleLabel, onSignOut, onDashboardClick, showDashboard, triggerClassName }) {
   return <DropdownMenu>

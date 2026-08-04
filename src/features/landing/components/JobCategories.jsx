@@ -40,24 +40,16 @@ function JobCategories({ lang }) {
   return (
     <section id="categories" className="bg-white py-20 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
-          <div>
-            <span className="inline-block bg-orange-50 text-[#F97316] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-orange-100">
-              Explore Categories
-            </span>
-            <h2 className="text-4xl font-extrabold text-[#0F172A]">
-              {lang === "hi" ? "सात मुख्य उद्योग" : "Seven Core Industries"}
-            </h2>
-            <p className="text-[#64748B] mt-2">
-              {lang === "hi" ? "अपना उद्योग चुनें" : "Find jobs in your industry"}
-            </p>
-          </div>
-          <Link
-            to="/industries"
-            className="flex items-center gap-2 text-[#2563EB] font-semibold hover:gap-3 transition-all text-sm whitespace-nowrap"
-          >
-            {lang === "hi" ? "सभी उद्योग" : "View All Industries"} <ArrowRight size={16} />
-          </Link>
+        <div className="mb-12">
+          <span className="inline-block bg-orange-50 text-[#F97316] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-orange-100">
+            Explore Categories
+          </span>
+          <h2 className="text-4xl font-extrabold text-[#0F172A]">
+            {lang === "hi" ? "सात मुख्य उद्योग" : "Seven Core Industries"}
+          </h2>
+          <p className="text-[#64748B] mt-2">
+            {lang === "hi" ? "अपना उद्योग चुनें" : "Find jobs in your industry"}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
@@ -93,6 +85,15 @@ function JobCategories({ lang }) {
               </motion.div>
             </Link>
           ))}
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <Link
+            to="/industries"
+            className="flex items-center gap-2 text-[#2563EB] font-semibold hover:gap-3 transition-all text-sm whitespace-nowrap"
+          >
+            {lang === "hi" ? "सभी उद्योग" : "View All Industries"} <ArrowRight size={16} />
+          </Link>
         </div>
       </div>
     </section>

@@ -1,4 +1,5 @@
-import { CheckCircle2, Users, Mic, Video, Package } from "lucide-react";
+import { Link } from "react-router";
+import { CheckCircle2, Users, Mic, Video, Package, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { homeImages } from "@/assets/Home";
 const features = [
@@ -7,7 +8,7 @@ const features = [
   { icon: <Video size={20} />, en: "Video Introductions", hi: "वीडियो परिचय" },
   { icon: <Package size={20} />, en: "Bulk Hiring", hi: "बल्क हायरिंग" }
 ];
-function EmployerSection({ lang }) {
+function EmployerSection({ lang, onPostJobClick }) {
   return <section id="employers" className="bg-[#F8FAFC] py-20 px-4 scroll-mt-24">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -135,9 +136,21 @@ function EmployerSection({ lang }) {
                 </div>)}
             </div>
 
-            <button className="flex items-center gap-2 bg-[#2563EB] text-white font-bold px-8 py-4 rounded-2xl text-lg hover:bg-blue-700 transition-all hover:shadow-xl hover:shadow-blue-200 hover:-translate-y-0.5">
-              {lang === "hi" ? "अभी नौकरी पोस्ट करें" : "Post a Job Now"} →
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => onPostJobClick?.()}
+                className="flex items-center justify-center gap-2 bg-[#2563EB] text-white font-bold px-8 py-4 rounded-2xl text-lg hover:bg-blue-700 transition-all hover:shadow-xl hover:shadow-blue-200 hover:-translate-y-0.5"
+              >
+                {lang === "hi" ? "अभी नौकरी पोस्ट करें" : "Post a Job Now"} →
+              </button>
+              <Link
+                to="/employers"
+                className="flex items-center justify-center gap-2 border-2 border-[#E2E8F0] bg-white text-[#0F172A] font-bold px-8 py-4 rounded-2xl text-lg hover:border-[#2563EB] hover:text-[#2563EB] transition-all"
+              >
+                {lang === "hi" ? "और जानें" : "Learn more"} <ArrowRight size={18} />
+              </Link>
+            </div>
           </motion.div>
         </div>
       </div>

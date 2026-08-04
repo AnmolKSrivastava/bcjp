@@ -368,20 +368,12 @@ function FeaturedJobs({
   return (
     <section id="jobs" className="bg-[#F8FAFC] py-20 px-4 scroll-mt-24">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-          <div>
-            <span className="inline-block bg-blue-50 text-[#2563EB] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-blue-100">
-              {txt.badge}
-            </span>
-            <h2 className="text-4xl font-extrabold text-[#0F172A]">{txt.title}</h2>
-            <p className="text-[#64748B] mt-2">{txt.subtitle}</p>
-          </div>
-          <Link
-            to="/jobs"
-            className="flex items-center gap-2 text-[#2563EB] font-semibold hover:gap-3 transition-all text-sm"
-          >
-            {txt.viewAll} <ArrowRight size={16} />
-          </Link>
+        <div className="mb-8">
+          <span className="inline-block bg-blue-50 text-[#2563EB] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-blue-100">
+            {txt.badge}
+          </span>
+          <h2 className="text-4xl font-extrabold text-[#0F172A]">{txt.title}</h2>
+          <p className="text-[#64748B] mt-2">{txt.subtitle}</p>
         </div>
 
         <div className="mb-10 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
@@ -547,6 +539,15 @@ function FeaturedJobs({
             })}
           </div>
         )}
+
+        <div className="mt-10 flex justify-center">
+          <Link
+            to="/jobs"
+            className="flex items-center gap-2 text-[#2563EB] font-semibold hover:gap-3 transition-all text-sm"
+          >
+            {txt.viewAll} <ArrowRight size={16} />
+          </Link>
+        </div>
       </div>
     </section>
   );

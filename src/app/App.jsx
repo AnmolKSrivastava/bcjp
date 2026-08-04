@@ -5,9 +5,15 @@ import { LanguageModal } from "@/shared/common/LanguageModal";
 import { LoginModal, RoleSelectionModal, useAuth } from "@/features/auth";
 import { RECAPTCHA_CONTAINER_ID } from "@/features/auth/hooks/usePhoneAuth";
 import { CreateProfileModal, WorkerDashboard } from "@/features/profile";
-import { CreateCompanyModal, PostJobModal, EmployerDashboard } from "@/features/employer";
+import {
+  CreateCompanyModal,
+  PostJobModal,
+  EmployerDashboard,
+  EmployersPage
+} from "@/features/employer";
 import { AdminDashboard, AdminLoginPage } from "@/features/admin";
 import { JobDetailsPage, JobsPage } from "@/features/jobs";
+import { AboutPage } from "@/features/about";
 import { IndustriesPage, IndustryDetailPage } from "@/features/industries";
 import { Navbar } from "@/shared/layout/Navbar";
 import { Footer } from "@/shared/layout/Footer";
@@ -44,6 +50,10 @@ function LandingPage({
     }
     if (location.hash === "#categories") {
       navigate("/industries", { replace: true });
+      return;
+    }
+    if (location.hash === "#employers") {
+      navigate("/employers", { replace: true });
     }
   }, [location.search, location.hash, navigate]);
 
@@ -72,7 +82,7 @@ function LandingPage({
           onCreateProfileClick={onCreateProfileClick}
         />
         <LanguageSection lang={lang} />
-        <EmployerSection lang={lang} />
+        <EmployerSection lang={lang} onPostJobClick={onPostJobClick} />
         <SuccessStories lang={lang} />
         <CTABanner lang={lang} onCreateProfileClick={onCreateProfileClick} />
       </main>
@@ -115,10 +125,6 @@ function App() {
   const [postJobOpen, setPostJobOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [jobsVersion, setJobsVersion] = useState(0);
-
-  const scrollToEmployers = () => {
-    document.getElementById("employers")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const handleLangSelect = (selected) => {
     setLang(selected);
@@ -172,7 +178,7 @@ function App() {
       return;
     }
     if (profile?.role !== USER_ROLES.EMPLOYER) {
-      scrollToEmployers();
+      navigate("/employers");
       return;
     }
     if (!profile.onboardingComplete) {
@@ -273,6 +279,24 @@ function App() {
                   onCreateProfileClick={handleCreateProfileClick}
                   onPostJobClick={handlePostJobClick}
                   onLoginClick={() => setLoginOpen(true)}
+                />
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <AboutPage
+                  lang={activeLang}
+                  onCreateProfileClick={handleCreateProfileClick}
+                />
+              }
+            />
+            <Route
+              path="/employers"
+              element={
+                <EmployersPage
+                  lang={activeLang}
+                  onPostJobClick={handlePostJobClick}
                 />
               }
             />

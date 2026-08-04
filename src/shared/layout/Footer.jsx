@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { Mic, Facebook, Instagram, Linkedin } from "lucide-react";
 
 function XIcon({ size = 18, className = "" }) {
@@ -84,14 +85,20 @@ function Footer({ lang }) {
             </p>
             <ul className="space-y-2">
               {[
-    { en: "Create Resume", hi: "रेज़्यूमे बनाएं" },
-    { en: "Browse Jobs", hi: "नौकरी देखें" },
-    { en: "Success Stories", hi: "सफलता की कहानियाँ" },
-    { en: "FAQs", hi: "सामान्य प्रश्न" }
+    { en: "About Us", hi: "हमारे बारे में", to: "/about" },
+    { en: "Browse Jobs", hi: "नौकरी देखें", to: "/jobs" },
+    { en: "Industries", hi: "उद्योग", to: "/industries" },
+    { en: "Success Stories", hi: "सफलता की कहानियाँ", to: "/#stories" }
   ].map((item) => <li key={item.en}>
-                  <a href="#" className="text-[#94A3B8] hover:text-white transition-colors text-sm">
-                    {item[lang]}
-                  </a>
+                  {item.to.startsWith("/#") ? (
+                    <a href={item.to} className="text-[#94A3B8] hover:text-white transition-colors text-sm">
+                      {item[lang]}
+                    </a>
+                  ) : (
+                    <Link to={item.to} className="text-[#94A3B8] hover:text-white transition-colors text-sm">
+                      {item[lang]}
+                    </Link>
+                  )}
                 </li>)}
             </ul>
           </div>
@@ -102,14 +109,14 @@ function Footer({ lang }) {
             </p>
             <ul className="space-y-2">
               {[
-    { en: "Post a Job", hi: "नौकरी पोस्ट करें" },
-    { en: "Browse Candidates", hi: "उम्मीदवार खोजें" },
-    { en: "Pricing", hi: "मूल्य निर्धारण" },
-    { en: "Contact Us", hi: "संपर्क करें" }
+    { en: "For Employers", hi: "नियोक्ताओं के लिए", to: "/employers" },
+    { en: "Post a Job", hi: "नौकरी पोस्ट करें", to: "/employers" },
+    { en: "Industries", hi: "उद्योग", to: "/industries" },
+    { en: "About Us", hi: "हमारे बारे में", to: "/about" }
   ].map((item) => <li key={item.en}>
-                  <a href="#" className="text-[#94A3B8] hover:text-white transition-colors text-sm">
+                  <Link to={item.to} className="text-[#94A3B8] hover:text-white transition-colors text-sm">
                     {item[lang]}
-                  </a>
+                  </Link>
                 </li>)}
             </ul>
           </div>
