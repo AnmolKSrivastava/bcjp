@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { MapPin, Briefcase, ArrowRight, Search, Mic, MicOff, Loader2, Bookmark, BookmarkCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/features/auth";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { listOpenJobs } from "@/features/employer/services/jobService";
+import { EXPERIENCE_OPTIONS } from "@/features/employer/data/jobOptions";
 import {
   applyToJob,
   listCandidateApplications,
@@ -15,18 +16,23 @@ import {
 } from "@/features/profile/services/applicationService";
 import { USER_ROLES } from "@/utils/constants";
 import {
+  TaxonomySelects,
   displayIndustryLabel,
   displayRoleLabel,
+  getDepartment,
+  getIndustry,
+  getRole,
+  labelOf,
   taxonomySearchText
 } from "@/features/taxonomy";
 
 const copy = {
   en: {
-    badge: "Featured Openings",
-    title: "Featured Jobs",
-    subtitle: "Apply now and start working soon",
-    viewAll: "View All Jobs",
-    searchPlaceholder: "Search by job, company, or city…",
+    badge: "Open Roles",
+    title: "Find Jobs",
+    subtitle: "Filter by industry, city, and experience — or search by voice",
+    results: "jobs found",
+    searchPlaceholder: "Search by job, company, or keyword…",
     voiceSearch: "Voice Search",
     listening: "Listening…",
     stopListening: "Stop",
@@ -35,7 +41,13 @@ const copy = {
     voicePermission: "Microphone permission is needed for voice search.",
     voiceNoSpeech: "Didn't catch that. Tap Voice Search and try again.",
     voiceError: "Voice search failed. Please type your search.",
-    noResults: "No jobs match your search.",
+    filters: "Filters",
+    city: "City",
+    cityPlaceholder: "e.g. Pune, Mumbai",
+    experience: "Experience",
+    experienceAll: "Any experience",
+    clearFilters: "Clear filters",
+    noResults: "No jobs match your filters.",
     noJobs: "No open jobs yet. Check back soon.",
     loading: "Loading jobs…",
     loadError: "Could not load jobs. Please refresh.",
@@ -52,11 +64,11 @@ const copy = {
     saveError: "Could not save job. Please try again."
   },
   hi: {
-    badge: "फ़ीचर्ड नौकरियाँ",
-    title: "टॉप नौकरियाँ",
-    subtitle: "अभी आवेदन करें और जल्दी काम शुरू करें",
-    viewAll: "सभी नौकरियाँ देखें",
-    searchPlaceholder: "नौकरी, कंपनी या शहर खोजें…",
+    badge: "खुली नौकरियाँ",
+    title: "नौकरी खोजें",
+    subtitle: "उद्योग, शहर और अनुभव से फ़िल्टर करें — या आवाज़ से खोजें",
+    results: "नौकरियाँ मिलीं",
+    searchPlaceholder: "नौकरी, कंपनी या कीवर्ड खोजें…",
     voiceSearch: "आवाज़ से खोजें",
     listening: "सुन रहे हैं…",
     stopListening: "रोकें",
@@ -65,7 +77,13 @@ const copy = {
     voicePermission: "आवाज़ खोज के लिए माइक की अनुमति दें।",
     voiceNoSpeech: "सुनाई नहीं दिया। फिर से आवाज़ खोज दबाएँ।",
     voiceError: "आवाज़ खोज असफल। कृपया टाइप करें।",
-    noResults: "आपकी खोज से कोई नौकरी मेल नहीं खाती।",
+    filters: "फ़िल्टर",
+    city: "शहर",
+    cityPlaceholder: "जैसे पुणे, मुंबई",
+    experience: "अनुभव",
+    experienceAll: "कोई भी अनुभव",
+    clearFilters: "फ़िल्टर हटाएँ",
+    noResults: "आपके फ़िल्टर से कोई नौकरी मेल नहीं खाती।",
     noJobs: "अभी कोई खुली नौकरी नहीं है। जल्द वापस देखें।",
     loading: "नौकरियाँ लोड हो रही हैं…",
     loadError: "नौकरियाँ लोड नहीं हो सकीं। कृपया रिफ्रेश करें।",
@@ -150,9 +168,17 @@ function jobVisual(job) {
   return LEGACY_TITLE_VISUALS[job?.title] ?? INDUSTRY_VISUALS.legacy;
 }
 
-const HOME_JOB_LIMIT = 6;
+function buildJobSearchParams({ industryId, departmentId, roleId, city, experience }) {
+  const next = {};
+  if (industryId) next.industry = industryId;
+  if (departmentId) next.department = departmentId;
+  if (roleId) next.role = roleId;
+  if (city) next.city = city;
+  if (experience) next.experience = experience;
+  return next;
+}
 
-function FeaturedJobs({
+function JobsPage({
   lang,
   browseMode = null,
   onBrowseModeHandled,
@@ -161,8 +187,15 @@ function FeaturedJobs({
 }) {
   const txt = copy[lang];
   const { user, profile, candidateProfile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const industryFilter = searchParams.get("industry") || "";
+  const departmentFilter = searchParams.get("department") || "";
+  const roleFilter = searchParams.get("role") || "";
+  const cityFilter = searchParams.get("city") || "";
+  const experienceFilter = searchParams.get("experience") || "";
   const searchInputRef = useRef(null);
   const [query, setQuery] = useState("");
+  const [cityInput, setCityInput] = useState(cityFilter);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -171,6 +204,10 @@ function FeaturedJobs({
   const [actionJobId, setActionJobId] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [voiceError, setVoiceError] = useState(null);
+
+  useEffect(() => {
+    setCityInput(cityFilter);
+  }, [cityFilter]);
 
   const handleVoiceResult = useCallback((text) => {
     setQuery(text);
@@ -348,8 +385,46 @@ function FeaturedJobs({
     }
   };
 
+  const updateFilters = (patch) => {
+    setSearchParams(
+      buildJobSearchParams({
+        industryId: industryFilter,
+        departmentId: departmentFilter,
+        roleId: roleFilter,
+        city: cityFilter,
+        experience: experienceFilter,
+        ...patch
+      }),
+      { replace: true }
+    );
+  };
+
+  const clearAllFilters = () => {
+    setCityInput("");
+    setQuery("");
+    setSearchParams({}, { replace: true });
+  };
+
+  const handleCityCommit = () => {
+    const city = cityInput.trim();
+    updateFilters({ city });
+  };
+
+  const hasActiveFilters = Boolean(
+    industryFilter || departmentFilter || roleFilter || cityFilter || experienceFilter || query.trim()
+  );
+
   const normalizedQuery = normalizeSearchQuery(query);
+  const normalizedCity = cityFilter.trim().toLowerCase();
   const filteredJobs = jobs.filter((job) => {
+    if (industryFilter && job.industryId !== industryFilter) return false;
+    if (departmentFilter && job.departmentId !== departmentFilter) return false;
+    if (roleFilter && job.roleId !== roleFilter) return false;
+    if (experienceFilter && job.experienceRequired !== experienceFilter) return false;
+    if (normalizedCity) {
+      const loc = String(job.location || "").toLowerCase();
+      if (!loc.includes(normalizedCity)) return false;
+    }
     if (!normalizedQuery) return true;
     const haystack = [
       taxonomySearchText(job, lang),
@@ -357,39 +432,73 @@ function FeaturedJobs({
       job.organizationName,
       job.location,
       job.employmentType,
+      job.experienceRequired,
       ...(job.skills ?? [])
     ]
       .join(" ")
       .toLowerCase();
     return normalizedQuery.split(/\s+/).every((term) => haystack.includes(term));
   });
-  const displayedJobs = filteredJobs.slice(0, HOME_JOB_LIMIT);
 
   return (
-    <section id="jobs" className="bg-[#F8FAFC] py-20 px-4 scroll-mt-24">
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <section className="px-4 py-10 sm:py-14">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-          <div>
-            <span className="inline-block bg-blue-50 text-[#2563EB] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-blue-100">
-              {txt.badge}
-            </span>
-            <h2 className="text-4xl font-extrabold text-[#0F172A]">{txt.title}</h2>
-            <p className="text-[#64748B] mt-2">{txt.subtitle}</p>
-          </div>
-          <Link
-            to="/jobs"
-            className="flex items-center gap-2 text-[#2563EB] font-semibold hover:gap-3 transition-all text-sm"
-          >
-            {txt.viewAll} <ArrowRight size={16} />
-          </Link>
+        <div className="mb-8">
+          <span className="inline-block bg-blue-50 text-[#2563EB] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-blue-100">
+            {txt.badge}
+          </span>
+          <h1 className="text-4xl font-extrabold text-[#0F172A]">{txt.title}</h1>
+          <p className="text-[#64748B] mt-2">{txt.subtitle}</p>
+          {hasActiveFilters && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {industryFilter && (
+                <span className="rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-sm font-semibold text-[#F97316]">
+                  {labelOf(getIndustry(industryFilter), lang)}
+                </span>
+              )}
+              {departmentFilter && (
+                <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-semibold text-[#2563EB]">
+                  {labelOf(getDepartment(industryFilter, departmentFilter), lang) || departmentFilter}
+                </span>
+              )}
+              {roleFilter && (
+                <span className="rounded-full border border-green-100 bg-green-50 px-3 py-1 text-sm font-semibold text-green-700">
+                  {labelOf(getRole(industryFilter, departmentFilter, roleFilter), lang) || roleFilter}
+                </span>
+              )}
+              {cityFilter && (
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-[#0F172A]">
+                  {cityFilter}
+                </span>
+              )}
+              {experienceFilter && (
+                <span className="rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-sm font-semibold text-violet-700">
+                  {EXPERIENCE_OPTIONS.find((o) => o.en === experienceFilter)?.[lang] || experienceFilter}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="text-sm font-semibold text-[#2563EB] hover:underline"
+              >
+                {txt.clearFilters}
+              </button>
+            </div>
+          )}
+          {!loading && !loadError && (
+            <p className="mt-3 text-sm font-semibold text-[#64748B]">
+              {filteredJobs.length} {txt.results}
+            </p>
+          )}
         </div>
 
-        <div className="mb-10 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="mb-10 space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search
                 size={20}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]"
               />
               <input
                 ref={searchInputRef}
@@ -414,21 +523,83 @@ function FeaturedJobs({
               {voiceListening ? txt.stopListening : txt.voiceSearch}
             </button>
           </div>
+
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#94A3B8]">
+              {txt.filters}
+            </p>
+            <TaxonomySelects
+              form={{
+                industryId: industryFilter,
+                departmentId: departmentFilter,
+                roleId: roleFilter
+              }}
+              onChange={({ industryId, departmentId, roleId }) =>
+                updateFilters({ industryId, departmentId, roleId })
+              }
+              lang={lang}
+              optional
+              layout="row"
+              idPrefix="jobFilter"
+            />
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="jobFilterCity" className="text-xs font-semibold text-[#0F172A] sm:text-sm">
+                  {txt.city}
+                </label>
+                <input
+                  id="jobFilterCity"
+                  type="text"
+                  value={cityInput}
+                  onChange={(e) => setCityInput(e.target.value)}
+                  onBlur={handleCityCommit}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleCityCommit();
+                    }
+                  }}
+                  placeholder={txt.cityPlaceholder}
+                  className="flex h-11 w-full rounded-xl border-2 border-[#E2E8F0] bg-[#F8FAFC] px-3 text-sm text-[#0F172A] outline-none transition-colors focus:border-[#2563EB] focus:bg-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="jobFilterExperience"
+                  className="text-xs font-semibold text-[#0F172A] sm:text-sm"
+                >
+                  {txt.experience}
+                </label>
+                <select
+                  id="jobFilterExperience"
+                  value={experienceFilter}
+                  onChange={(e) => updateFilters({ experience: e.target.value })}
+                  className="flex h-11 w-full rounded-xl border-2 border-[#E2E8F0] bg-[#F8FAFC] px-3 text-sm text-[#0F172A] outline-none transition-colors focus:border-[#2563EB] focus:bg-white"
+                >
+                  <option value="">{txt.experienceAll}</option>
+                  {EXPERIENCE_OPTIONS.map((option) => (
+                    <option key={option.en} value={option.en}>
+                      {option[lang] || option.en}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
           {voiceListening && (
-            <p className="mt-3 flex items-center gap-2 text-sm font-medium text-[#F97316]">
+            <p className="flex items-center gap-2 text-sm font-medium text-[#F97316]">
               <Loader2 size={14} className="animate-spin" />
               {txt.listening}
               {interimTranscript ? ` “${interimTranscript}”` : ""}
             </p>
           )}
           {!voiceListening && (
-            <p className="mt-3 text-sm text-[#94A3B8]">
+            <p className="text-sm text-[#94A3B8]">
               {voiceSupported ? txt.voiceHint : txt.voiceUnsupported}
             </p>
           )}
-          {voiceError && (
-            <p className="mt-2 text-sm text-red-600">{voiceError}</p>
-          )}
+          {voiceError && <p className="text-sm text-red-600">{voiceError}</p>}
         </div>
 
         {actionError && (
@@ -444,13 +615,13 @@ function FeaturedJobs({
           <p className="rounded-2xl border border-dashed border-red-200 bg-white px-6 py-12 text-center text-red-600">
             {loadError}
           </p>
-        ) : displayedJobs.length === 0 ? (
+        ) : filteredJobs.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[#E2E8F0] bg-white px-6 py-12 text-center text-[#64748B]">
             {jobs.length === 0 ? txt.noJobs : txt.noResults}
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {displayedJobs.map((job, i) => {
+            {filteredJobs.map((job, i) => {
               const visual = jobVisual(job);
               const isApplied = appliedJobIds.has(job.id);
               const isSaved = Boolean(savedByJobId[job.id]);
@@ -548,8 +719,9 @@ function FeaturedJobs({
           </div>
         )}
       </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
-export { FeaturedJobs };
+export { JobsPage };

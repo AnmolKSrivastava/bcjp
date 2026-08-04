@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, useSearchParams } from "react-router";
+import { Routes, Route, useLocation, useNavigate } from "react-router";
 import { AnimatePresence } from "motion/react";
 import { LanguageModal } from "@/shared/common/LanguageModal";
 import { LoginModal, RoleSelectionModal, useAuth } from "@/features/auth";
@@ -7,8 +7,8 @@ import { RECAPTCHA_CONTAINER_ID } from "@/features/auth/hooks/usePhoneAuth";
 import { CreateProfileModal, WorkerDashboard } from "@/features/profile";
 import { CreateCompanyModal, PostJobModal, EmployerDashboard } from "@/features/employer";
 import { AdminDashboard, AdminLoginPage } from "@/features/admin";
-import { JobDetailsPage } from "@/features/jobs";
-import { IndustryDetailPage } from "@/features/industries";
+import { JobDetailsPage, JobsPage } from "@/features/jobs";
+import { IndustriesPage, IndustryDetailPage } from "@/features/industries";
 import { Navbar } from "@/shared/layout/Navbar";
 import { Footer } from "@/shared/layout/Footer";
 import { HeroSection } from "@/features/landing/components/HeroSection";
@@ -25,31 +25,33 @@ function LandingPage({
   lang,
   onCreateProfileClick,
   onPostJobClick,
-  jobBrowseMode,
-  setJobBrowseMode,
   onLoginClick
 }) {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const industryFilter = searchParams.get("industry");
-  const departmentFilter = searchParams.get("department");
-  const roleFilter = searchParams.get("role");
+  const location = useLocation();
 
   useEffect(() => {
-    if (industryFilter || departmentFilter || roleFilter || window.location.hash === "#jobs") {
-      document.getElementById("jobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const params = new URLSearchParams(location.search);
+    const hasJobFilters =
+      params.has("industry") ||
+      params.has("department") ||
+      params.has("role") ||
+      params.has("city") ||
+      params.has("experience");
+    if (hasJobFilters || location.hash === "#jobs") {
+      navigate(`/jobs${location.search}`, { replace: true });
+      return;
     }
-  }, [industryFilter, departmentFilter, roleFilter]);
+    if (location.hash === "#categories") {
+      navigate("/industries", { replace: true });
+    }
+  }, [location.search, location.hash, navigate]);
 
-  const scrollToJobs = (mode) => {
-    setJobBrowseMode(mode);
-    document.getElementById("jobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const goToJobs = (mode) => {
+    navigate("/jobs", { state: mode ? { browseMode: mode } : undefined });
   };
   const handleIndustryClick = (industryId) => {
     navigate(`/industries/${industryId}`);
-  };
-  const clearJobFilters = () => {
-    setSearchParams({});
   };
   return (
     <>
@@ -58,20 +60,14 @@ function LandingPage({
           lang={lang}
           onCreateProfileClick={onCreateProfileClick}
           onPostJobClick={onPostJobClick}
-          onBrowseJobsClick={() => scrollToJobs("type")}
-          onVoiceBrowseClick={() => scrollToJobs("voice")}
+          onBrowseJobsClick={() => goToJobs("type")}
+          onVoiceBrowseClick={() => goToJobs("voice")}
           onIndustryClick={handleIndustryClick}
         />
         <HowItWorks lang={lang} />
-        <JobCategories lang={lang} onIndustryClick={handleIndustryClick} />
+        <JobCategories lang={lang} />
         <FeaturedJobs
           lang={lang}
-          browseMode={jobBrowseMode}
-          onBrowseModeHandled={() => setJobBrowseMode(null)}
-          industryFilter={industryFilter}
-          departmentFilter={departmentFilter}
-          roleFilter={roleFilter}
-          onClearIndustryFilter={clearJobFilters}
           onLoginClick={onLoginClick}
           onCreateProfileClick={onCreateProfileClick}
         />
@@ -80,6 +76,30 @@ function LandingPage({
         <SuccessStories lang={lang} />
         <CTABanner lang={lang} onCreateProfileClick={onCreateProfileClick} />
       </main>
+      <Footer lang={lang} />
+    </>
+  );
+}
+
+function JobsRoute({ lang, onLoginClick, onCreateProfileClick }) {
+  const location = useLocation();
+  const [browseMode, setBrowseMode] = useState(location.state?.browseMode ?? null);
+
+  useEffect(() => {
+    if (location.state?.browseMode) {
+      setBrowseMode(location.state.browseMode);
+    }
+  }, [location.state]);
+
+  return (
+    <>
+      <JobsPage
+        lang={lang}
+        browseMode={browseMode}
+        onBrowseModeHandled={() => setBrowseMode(null)}
+        onLoginClick={onLoginClick}
+        onCreateProfileClick={onCreateProfileClick}
+      />
       <Footer lang={lang} />
     </>
   );
@@ -95,7 +115,6 @@ function App() {
   const [postJobOpen, setPostJobOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [jobsVersion, setJobsVersion] = useState(0);
-  const [jobBrowseMode, setJobBrowseMode] = useState(null);
 
   const scrollToEmployers = () => {
     document.getElementById("employers")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -253,11 +272,13 @@ function App() {
                   lang={activeLang}
                   onCreateProfileClick={handleCreateProfileClick}
                   onPostJobClick={handlePostJobClick}
-                  jobBrowseMode={jobBrowseMode}
-                  setJobBrowseMode={setJobBrowseMode}
                   onLoginClick={() => setLoginOpen(true)}
                 />
               }
+            />
+            <Route
+              path="/industries"
+              element={<IndustriesPage lang={activeLang} />}
             />
             <Route
               path="/industries/:industryId"
@@ -290,6 +311,16 @@ function App() {
                   lang={activeLang}
                   onCreateProfileClick={handleCreateProfileClick}
                   onEditProfileClick={handleCreateProfileClick}
+                />
+              }
+            />
+            <Route
+              path="/jobs"
+              element={
+                <JobsRoute
+                  lang={activeLang}
+                  onLoginClick={() => setLoginOpen(true)}
+                  onCreateProfileClick={handleCreateProfileClick}
                 />
               }
             />

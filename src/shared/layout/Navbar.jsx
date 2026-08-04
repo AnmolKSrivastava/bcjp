@@ -61,8 +61,8 @@ const t = {
   }
 };
 const navLinks = [
-  { key: "findJobs", id: "jobs" },
-  { key: "categories", id: "categories" },
+  { key: "findJobs", to: "/jobs" },
+  { key: "categories", to: "/industries" },
   { key: "forEmployers", id: "employers" },
   { key: "successStories", id: "stories" },
   { key: "aboutUs", id: "cta" }
@@ -128,6 +128,14 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
     }
     setMenuOpen(false);
   };
+  const handleNavClick = (item) => {
+    if (item.to) {
+      navigate(item.to);
+      setMenuOpen(false);
+      return;
+    }
+    scrollTo(item.id);
+  };
   const goHome = () => {
     navigate("/");
     setMenuOpen(false);
@@ -175,8 +183,8 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
   }
             <div className="hidden lg:flex items-center gap-4 xl:gap-6">
               {navLinks.map((item) => <button
-    key={item.id}
-    onClick={() => scrollTo(item.id)}
+    key={item.key}
+    onClick={() => handleNavClick(item)}
     className="text-[#64748B] hover:text-[#2563EB] font-medium text-sm transition-colors whitespace-nowrap"
   >
                   {txt[item.key]}
@@ -308,10 +316,10 @@ function Navbar({ lang, onLangToggle, onLoginClick, onCreateProfileClick, onSetu
 
           <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3">
             <ul className="flex flex-col gap-0.5">
-              {navLinks.map((item) => <li key={item.id}>
+              {navLinks.map((item) => <li key={item.key}>
                   <button
     type="button"
-    onClick={() => scrollTo(item.id)}
+    onClick={() => handleNavClick(item)}
     className="w-full text-left text-[#0F172A] font-semibold text-base py-3 px-3 rounded-xl hover:bg-[#F8FAFC] hover:text-[#2563EB] transition-colors"
   >
                     {txt[item.key]}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import confetti from "canvas-confetti";
 import {
   User,
@@ -197,6 +198,7 @@ function labelFor(options, value, lang) {
 
 function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
   const txt = t[lang];
+  const navigate = useNavigate();
   const { user, profile, candidateProfile, refreshProfile, refreshCandidateProfile } = useAuth();
   const isEdit = Boolean(candidateProfile && profile?.onboardingComplete);
   const [step, setStep] = useState("choose");
@@ -323,7 +325,7 @@ function CreateProfileModal({ open, onOpenChange, lang, onComplete }) {
 
   const handleBrowseJobs = () => {
     onOpenChange(false);
-    document.getElementById("jobs")?.scrollIntoView({ behavior: "smooth" });
+    navigate("/jobs");
   };
 
   const previewSkills = form.skills

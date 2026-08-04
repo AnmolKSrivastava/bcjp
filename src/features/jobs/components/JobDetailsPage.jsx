@@ -262,10 +262,7 @@ function JobDetailsPage({ lang = "en", onLoginClick, onCreateProfileClick }) {
   };
 
   const goBrowseJobs = () => {
-    navigate("/");
-    window.setTimeout(() => {
-      document.getElementById("jobs")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    navigate("/jobs");
   };
 
   if (loading) {

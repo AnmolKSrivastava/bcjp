@@ -53,7 +53,7 @@ const INDUSTRY_VISUALS = {
 
 const copy = {
   en: {
-    back: "Back to Home",
+    back: "All industries",
     badge: "Industry",
     departments: "Departments",
     roles: "Roles",
@@ -65,7 +65,7 @@ const copy = {
     allIndustries: "All industries"
   },
   hi: {
-    back: "होम पर वापस",
+    back: "सभी उद्योग",
     badge: "उद्योग",
     departments: "विभाग",
     roles: "भूमिकाएँ",
@@ -97,7 +97,7 @@ function IndustryDetailPage({ lang = "en" }) {
         <div className="mx-auto max-w-lg rounded-2xl border border-[#E2E8F0] bg-white p-8 text-center shadow-sm">
           <p className="text-lg font-bold text-[#0F172A]">{txt.notFound}</p>
           <Link
-            to="/"
+            to="/industries"
             className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#2563EB] hover:underline"
           >
             <ArrowLeft size={16} />
@@ -113,7 +113,7 @@ function IndustryDetailPage({ lang = "en" }) {
     params.set("industry", industry.id);
     if (departmentId) params.set("department", departmentId);
     if (roleId) params.set("role", roleId);
-    navigate(`/?${params.toString()}#jobs`);
+    navigate(`/jobs?${params.toString()}`);
   };
 
   return (
@@ -127,7 +127,7 @@ function IndustryDetailPage({ lang = "en" }) {
             <div>
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/industries")}
                 className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#2563EB] hover:gap-3 transition-all"
               >
                 <ArrowLeft size={16} />
@@ -187,7 +187,7 @@ function IndustryDetailPage({ lang = "en" }) {
               <h2 className="text-2xl font-extrabold text-[#0F172A]">{txt.departments}</h2>
               <p className="mt-1 text-sm text-[#64748B]">{txt.pickRole}</p>
             </div>
-            <Link to="/#categories" className="text-sm font-semibold text-[#2563EB] hover:underline">
+            <Link to="/industries" className="text-sm font-semibold text-[#2563EB] hover:underline">
               {txt.allIndustries}
             </Link>
           </div>
